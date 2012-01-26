@@ -2,7 +2,8 @@ from collections import defaultdict
 import theano
 import numpy as np
 import theano.tensor as T
-from Job import *
+#from Job import *
+from numeric_graph import TheanoJob, TheanoVariable
 from util import set_union
 
 tdp = theano.printing.debugprint
@@ -50,7 +51,7 @@ z = y.sum()
 
 f = theano.function([x], z, mode=cpu_mode)
 an = f.maker.env.outputs[0].owner
-job = Job(an)
+job = TheanoJob(an)
 
 def function_to_job_graph(f, shape_dict=None):
     inputs, outputs = f.maker.env.inputs, f.maker.env.outputs

@@ -25,7 +25,7 @@ class Job(Node):
     def type_check(self):
         assert is_ordered_iterator(self.inputs)
         assert is_ordered_iterator(self.outputs)
-        assert len(inputs)>0 and len(outputs)>0
+        assert len(self.inputs)>0 and len(self.outputs)>0
 
     def info(self):
         return self.inputs, self.outputs, self.op

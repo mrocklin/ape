@@ -4,26 +4,32 @@ from graph import Node as AbstractNode
 import theano
 import numpy as np
 
-class Job(AbstractJob):
+job_names = {}
+
+class TheanoJob(AbstractJob):
     def __init__(self, apply):
         assert isinstance(apply, theano.Apply)
         self._apply = apply
 
     def type_check(self):
-        super(Job, self).type_check()
-        assert isinstance(self.inputs[0], theano.Variable)
-        assert isinstance(self.outputs[0], theano.Variable)
+        super(TheanoJob, self).type_check()
+        assert all(isinstance(var, TheanoVariable) for var in self.inputs)
+        assert all(isinstance(var, TheanoVariable) for var in self.outputs)
         assert isinstance(self.op, theano.Op)
 
     @property
     def inputs(self):
-        return [Variable(var) for var in self._apply.inputs]
+        return [TheanoVariable(var) for var in self._apply.inputs]
     @property
     def outputs(self):
-        return [Variable(var) for var in self._apply.outputs]
+        return [TheanoVariable(var) for var in self._apply.outputs]
     @property
     def op(self):
         return self._apply.op
+
+    @property
+    def name(self):
+        return "%s_%d"%(str(self.op), hash(self))
 
     def info(self):
         return self._apply
@@ -53,12 +59,12 @@ class Job(AbstractJob):
 
         return theano.function(inputs, output, mode=mode)
 
-class Variable(AbstractVariable):
+class TheanoVariable(AbstractVariable):
     def __init__(self, variable):
         self._variable = variable
 
     def type_check(self):
-        super(Variable, self).type_check()
+        super(TheanoVariable, self).type_check()
         assert isinstance(self._variable, theano.Variable)
 
     def info(self):
@@ -66,13 +72,14 @@ class Variable(AbstractVariable):
 
     @property
     def name(self):
-        return self._variable.name
+        varname = self._variable.name or "var"
+        return "%s_%d"%(varname, hash(self))
 
     @property
     def from_job(self):
         if not self._variable.owner:
             return None
-        return Job(self._variable.owner)
+        return TheanoJob(self._variable.owner)
     @property
     def to_jobs(self):
         if all(isinstance(apply, str) for apply, idx in self._variable.clients):
@@ -80,7 +87,7 @@ class Variable(AbstractVariable):
         assert not any(isinstance(apply, str)
                 for apply, idx in self._variable.clients)
 
-        return [Job(client) for client, index in self._variable.clients]
+        return [TheanoJob(client) for client, index in self._variable.clients]
 
     @property
     def shape(self):
