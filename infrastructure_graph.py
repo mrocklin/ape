@@ -1,11 +1,11 @@
 from graph import Node, is_ordered_iterator
-from numeric_graph import TheanoVariable, TheanoArrayVariable, TheanoJob
+from computation_graph import TheanoVariable, TheanoArrayVariable, TheanoJob
 from graph import Variable, Job
 import time
 
 def importall(view):
     view.execute('import numpy as np')
-    view.execute('from numeric_graph import *')
+    view.execute('from computation_graph import *')
 def apply_clone(ap):
     """
     Takes in an apply node in some larger Env context.
@@ -236,7 +236,7 @@ from IPython.parallel import Client
 rc = Client()
 view = rc[:]
 view.execute('import numpy as np')
-view.execute('from numeric_graph import TheanoJob, TheanoVariable')
+view.execute('from computation_graph import TheanoJob, TheanoVariable')
 A,B = rc[0], rc[1]
 C = CPUWorker(A)
 D = CPUWorker(B)

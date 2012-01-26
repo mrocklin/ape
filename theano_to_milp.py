@@ -3,7 +3,7 @@ import theano
 import numpy as np
 import theano.tensor as T
 #from Job import *
-from numeric_graph import TheanoJob, TheanoVariable
+from computation_graph import TheanoJob, TheanoVariable
 from util import set_union
 
 tdp = theano.printing.debugprint
