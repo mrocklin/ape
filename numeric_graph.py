@@ -1,12 +1,10 @@
-from graph import Job as AbstractJob
-from graph import Variable as AbstractVariable
-from graph import Node as AbstractNode
+from graph import Job, Variable, Node
 import theano
 import numpy as np
 
 job_names = {}
 
-class TheanoJob(AbstractJob):
+class TheanoJob(Job):
     def __init__(self, apply):
         assert isinstance(apply, theano.Apply)
         self._apply = apply
@@ -59,7 +57,7 @@ class TheanoJob(AbstractJob):
 
         return theano.function(inputs, output, mode=mode)
 
-class TheanoVariable(AbstractVariable):
+class TheanoVariable(Variable):
     def __init__(self, variable):
         self._variable = variable
 
@@ -96,6 +94,28 @@ class TheanoVariable(AbstractVariable):
     @property
     def var(self):
         return self._variable
+
+class TheanoArrayVariable(TheanoVariable):
+    def __init__(self, variable, shape=None):
+        self._variable = variable
+        self._shape = shape
+
+    def type_check(self):
+        super(TheanoArrayVariable, self).type_check()
+        assert isinstance(self._variable, theano.tensor.TensorVariable)
+
+    def get_shape(self):
+        if not self._shape:
+            raise ValueError("Have not yet specified shape for %s"%(str(self)))
+        return self._shape
+    def set_shape(self):
+        self._shape = shape
+
+    shape = property(get_shape, set_shape)
+    @property
+    def dtype(self):
+        return self._variable.dtype
+
 
 def cpu_var_to_gpu_var(x):
     from theano.sandbox import cuda
