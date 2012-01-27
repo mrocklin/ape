@@ -8,6 +8,7 @@ def importall(view):
     view.execute('import numpy as np')
     view.execute('from computation_graph import *')
     view.execute('from theano_to_milp import togpu_data, tocpu_data')
+    view.execute('import theano')
 
 def apply_clone(ap):
     """
@@ -64,7 +65,8 @@ class Worker(Node):
 
     def can_compute(self, job):
         try:
-            self.compile(job)
+            res = self.compile(job)
+            res = res.result # pull the error from the remote job if one exists
             return True
         except:
             return False
@@ -88,9 +90,14 @@ class Worker(Node):
     def local_name(self, x):
         return x.name
 
+    def instantiate_random_variable(self, var):
+        raise NotImplementedError()
+    def instantiate_empty_variable(self, var):
+        raise NotImplementedError()
+
 def has_gpu(remote):
-    return True
-    raise NotImplementedError()
+    return remote['theano.config.device'] == 'gpu'
+
 class PUWorker(Worker):
     """
     This class contains shared code between CPU and GPU workers
@@ -110,7 +117,7 @@ class PUWorker(Worker):
         assert isinstance(job, Job)
         return self.has(job)
 
-    def _compile_job(self, job, gpu=None):
+    def _compile(self, job, gpu=None):
         assert gpu is not None
         name = self.local_name(job)
         ap_new = apply_clone(job._apply)
@@ -133,15 +140,16 @@ class PUWorker(Worker):
             key = self.local_name(key)
         return self.rc[key]
 
+
 class GPUWorker(PUWorker):
 
     def __init__(self, host):
         self.host = host
-        assert has_gpu(host), "Can not create a GPUWorker on %s"%host
+        assert has_gpu(host), "Can not create a GPUWorker on %s"%str(host)
         self.rc = host.rc
 
     def compile(self, job):
-        return self._compile_job(job, gpu=True)
+        return self._compile(job, gpu=True)
 
     def instantiate_random_variable(self, var):
         var_previously_on_host = var in self.host
@@ -155,6 +163,13 @@ class GPUWorker(PUWorker):
         if not var_previously_on_host:
             self.do('del %s'%self.host.local_name(var)) # delete host copy
 
+        return res
+
+    def instantiate_empty_variable(self, var):
+        assert var.dtype in (np.float32, 'float32')
+        name = self.local_name(var)
+        res = self.do('%s = theano.sandbox.cuda.CudaNdarray.zeros(%s)'%(
+                      name,                              str(var.shape)))
         return res
 
     def local_name(self, var):
@@ -183,7 +198,7 @@ class CPUWorker(PUWorker):
         return str(self.rc.targets)
 
     def compile(self, job):
-        return self._compile_job(job, gpu=False)
+        return self._compile(job, gpu=False)
 
     def instantiate_random_variable(self, var):
         assert hasattr(var, 'shape') and hasattr(var, 'dtype')
@@ -194,6 +209,16 @@ class CPUWorker(PUWorker):
         return self.do('%s = np.random.random(%s_shape).astype(%s_dtype)'%(
             name, name, name))
 
+    def instantiate_empty_variable(self, var):
+        assert hasattr(var, 'shape') and hasattr(var, 'dtype')
+        name = self.local_name(var)
+        self.rc['%s_shape'%name] = var.shape
+        self.rc['%s_dtype'%name] = var.dtype
+
+        return self.do('%s = np.empty(%s_shape, dtype=%s_dtype)'%(
+            name, name, name))
+
+
 class Wire(Node):
     def __init__(self, A, B):
         self.A = A
@@ -202,9 +227,55 @@ class Wire(Node):
         raise NotImplementedError()
 
 class CPUWireCPU(Wire):
-    pass
+    def type_check(self):
+        assert isinstance(self.A, CPUWorker)
+        assert isinstance(self.B, CPUWorker)
 class MPIWire(CPUWireCPU):
-    pass
+    def __init__(self, A, B):
+        self.A = A
+        self.B = B
+        self.init_comm()
+
+    def init_comm(self):
+        def init_mpi():
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            return comm.Get_rank()
+
+        a = self.A.apply(init_comm)
+        b = self.B.apply(init_comm)
+        self._a_rank = a.result
+        self._b_rank = a.result
+        return
+
+    def get_ranks(self):
+        def get_rank():
+            return MPI.COMM_WORLD.Get_rank()
+        return self.A.apply(get_rank), self.B.apply(get_rank)
+
+    @property
+    def rank(self):
+        if self._a_rank and self._b_rank:
+            return self._a_rank, self._b_rank
+        else:
+            return self.get_ranks()
+
+    @property
+    def a_rank(self):
+        return self.rank[0]
+    @property
+    def b_rank(self):
+        return self.rank[1]
+
+    def transmit(self, var):
+        assert var in self.A
+        B.instantiate_empty_variable(var)
+        a = B.do('comm.Recv(%s, source=%d, tag=13)'%(
+                B.local_name(var), self.a_rank))
+        b = A.do('comm.Send(%s, dest=%d, tag=13)'%(
+                A.local_name(var), self.b_rank))
+
+        return a,b
 class ZMQWire(CPUWireCPU):
     pass
 

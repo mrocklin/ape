@@ -33,9 +33,6 @@ class TheanoJob(Job):
         return self._apply
 
     def function(self, additional_tags=None, gpu=False):
-        # inputs = [inp.clone() for inp in self.apply.inputs]
-        # output = self.apply.op(inputs)
-        # env = theano.Env(inputs, [output])
         mode = theano.compile.mode.get_default_mode()
 
         inputs = self.inputs
