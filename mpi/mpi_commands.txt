@@ -1,0 +1,4 @@
+ipcontroller --profile=mpi
+mpiexec -machinefile machinefile.txt --np 3 ipengine --profile=mpi
+
+

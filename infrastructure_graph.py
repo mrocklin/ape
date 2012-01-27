@@ -223,7 +223,7 @@ class Wire(Node):
     def __init__(self, A, B):
         self.A = A
         self.B = B
-    def send(self, var):
+    def transmit(self, var):
         raise NotImplementedError()
 
 class CPUWireCPU(Wire):
@@ -254,7 +254,7 @@ class MPIWire(CPUWireCPU):
         return self.A.apply(get_rank), self.B.apply(get_rank)
 
     @property
-    def rank(self):
+    def ranks(self):
         if self._a_rank and self._b_rank:
             return self._a_rank, self._b_rank
         else:
@@ -262,10 +262,10 @@ class MPIWire(CPUWireCPU):
 
     @property
     def a_rank(self):
-        return self.rank[0]
+        return self.ranks[0]
     @property
     def b_rank(self):
-        return self.rank[1]
+        return self.ranks[1]
 
     def transmit(self, var):
         assert var in self.A
@@ -277,7 +277,19 @@ class MPIWire(CPUWireCPU):
 
         return a,b
 class ZMQWire(CPUWireCPU):
-    pass
+    def __init__(self, A, B):
+        self.A = A
+        self.B = B
+    def init_comm(self):
+        for W in [self.A, self.B]:
+            W.execute('from communicator import EngineCommunicator')
+            W.execute('if "com" not in globals(): com = EngineCommunicator()')
+        self.peers = {self.A : self.A.apply_async(lambda : com.info),
+                      self.B : self.B.apply_async(lambda : com.info)}
+        for W in [self.A, self.B]:
+            W.apply_sync(lambda pdict: com.connect(pdict), peers)
+
+
 
 class CPUWireGPU(Wire):
     pass
