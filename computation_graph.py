@@ -55,7 +55,7 @@ class TheanoJob(Job):
         if additional_tags:
             mode = mode.including(additional_tags)
 
-        return theano.function(inputs, output, mode=mode)
+        return theano.function(inputs, output, mode=mode, name='test')
 
 class TheanoVariable(Variable):
     def __init__(self, variable):

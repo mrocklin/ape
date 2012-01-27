@@ -1,22 +1,23 @@
 from graph import Node, is_ordered_iterator
 from computation_graph import TheanoVariable, TheanoArrayVariable, TheanoJob
 from graph import Variable, Job
+from theano_to_milp import togpu_data, tocpu_data
 import time
 
 def importall(view):
     view.execute('import numpy as np')
     view.execute('from computation_graph import *')
+    view.execute('from theano_to_milp import togpu_data, tocpu_data')
+
 def apply_clone(ap):
     """
     Takes in an apply node in some larger Env context.
     Returns the same apply/variables outside of the context
     """
     inputs = [inp.clone() for inp in ap.inputs]
-    output = ap.op(inputs)
+    output = ap.op(*inputs)
     ap_new = output.owner
     return ap_new
-
-
 
 class Worker(Node):
     """
@@ -88,6 +89,7 @@ class Worker(Node):
         return x.name
 
 def has_gpu(remote):
+    return True
     raise NotImplementedError()
 class PUWorker(Worker):
     """
@@ -96,6 +98,9 @@ class PUWorker(Worker):
     def has(self, x):
         self.do('result = "%s" in globals()'%self.local_name(x))
         return self.rc['result']
+
+    def do(self, cmd):
+        return self.rc.execute(cmd)
 
     def has_variable(self, var):
         assert isinstance(var, Variable)
@@ -109,16 +114,24 @@ class PUWorker(Worker):
         assert gpu is not None
         name = self.local_name(job)
         ap_new = apply_clone(job._apply)
-        self.rc['apply_%s'%job.name] = ap_new
+        self.rc['apply_%s'%name] = ap_new
         self.do('job_%s = TheanoJob(apply_%s)'%(name, name))
-        return self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
+        self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
+        res = self.do('%s.name = %s.name if hasattr(%s, "name") else %s'%(
+            name, name, name, name))
+        return res
 
     def _run(self, job):
         name = self.local_name
         outputs = ','.join([name(o) for o in job.outputs])
         inputs = ','.join([name(i) for i in job.inputs])
 
-        return self.do('%s = %s([%s])'%(outputs, name(job), inputs))
+        return self.do('%s = %s(%s)'%(outputs, name(job), inputs))
+
+    def __getitem__(self, key):
+        if isinstance(key, (Variable, Job)):
+            key = self.local_name(key)
+        return self.rc[key]
 
 class GPUWorker(PUWorker):
 
@@ -136,11 +149,13 @@ class GPUWorker(PUWorker):
         if not var_previously_on_host:
             self.host.instantiate_random_variable(var) # create on host
 
-        self.do('%s = togpu_data(%s)'%(
+        res = self.do('%s = togpu_data(%s)'%(
             self.local_name(var), self.host.local_name(var))) # transfer to gpu
 
         if not var_previously_on_host:
             self.do('del %s'%self.host.local_name(var)) # delete host copy
+
+        return res
 
     def local_name(self, var):
         return "gpu_"+var.name
@@ -152,9 +167,6 @@ class GPUWorker(PUWorker):
 class CPUWorker(PUWorker):
     def __init__(self, remote):
         self.rc = remote
-
-    def do(self, cmd):
-        return self.rc.execute(cmd)
 
     def type_check(self):
         super(CPU_Worker, self).type_check()
@@ -235,8 +247,7 @@ class CommNetwork(object):
 from IPython.parallel import Client
 rc = Client()
 view = rc[:]
-view.execute('import numpy as np')
-view.execute('from computation_graph import TheanoJob, TheanoVariable')
+importall(view)
 A,B = rc[0], rc[1]
 C = CPUWorker(A)
 D = CPUWorker(B)
