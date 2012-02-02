@@ -1,0 +1,84 @@
+\documentclass[compress, blue]{beamer}
+\mode<presentation>
+\usetheme{Warsaw}
+%\usetheme{Hannover}
+%\usecolortheme{lily}
+\useoutertheme[subsection=false]{smoothbars}
+%\useinnertheme{rectangles}
+%\hypersetup{pdfpagemode=FullScreen} % makes your presentation go automatically to full screen
+\setbeamertemplate{footline}[text line]{} % makes the footer EMPTY
+
+%\usetheme{Hannover}
+%\usetheme{default}
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=,urlcolor=links}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{mdwlist}
+\usepackage{subfigure}
+\usepackage[normalem]{ulem}
+
+\newcommand{\deriv}[2]{\frac{\partial {#1}}{\partial {#2}}}
+\newcommand{\xx}{{\bf x}}
+\newcommand{\dx}{\delta \xx}
+
+
+
+\begin{document}
+
+\begin{frame}{APE - Big Idea}
+
+Desire: Lets move away from C. Our problems are highly structured. Complex, 1000 line C programs are challenging to optimize.\\
+
+Problem: Find a small set of operations that describe our problems well.
+
+Our Solution: Array Primitives 
+
+Reasoning: Arrays primitives form a particularly nice interface between
+programmer and hardware. 
+\begin{itemize}
+\item Hails from a familiar and well used syntax (MatLab)
+\item Well tuned software packages exist on a variety of architecture (i.e.
+BLAS/LAPACK implemented for CPU/GPU/Cluster) 
+\item Relatively predictable operation costs (memory and time) 
+\item Forms a connection to Linear Algebra
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{APE - Current Project} 
+
+Can a computer schedule HPC code?
+
+\end{frame}
+
+\begin{frame}{APE - Current Proect} 
+
+Can we go bigger? Heuristics from OR and Embedded. 
+
+Lets raise some questions
+\begin{itemize}
+\item Can we do large distributed arrays? Hook up to PETSc?
+\item Can we build optimized operations for specific hardware? Bootstrap?
+\item What other domains use array based operations (machine learning). Can we
+engage them?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Project Philosophy}
+We currently ave one level of compilation - gcc, gfortran, nvcc
+Lets build several compilers at different levels to represent the automatable
+knowledge we have. 
+
+\begin{itemize}
+\item FEM representations
+\item Linear Algebra, Machine Learning, ...
+\item APE, \textit{Graph Operations, String parsing (regexs)}
+\item gcc, gfortran, nvcc
+\end{itemize}
+
+\end{frame}
+
+
+
+\end{document}
