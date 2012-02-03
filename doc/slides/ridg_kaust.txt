@@ -6,20 +6,21 @@ people got together and wanted a nice way to run their array-based algorithms
 on gpus. The result was Theano. I use Theano to create graphs, massage them to
 remove obvious inefficiencies (such as repeated computation) and to compile
 each operation to the CPU/GPU. They really deserve much of the credit for the
-ideas in the following slides. The only new thing I'm really adding is
-scheduling. 
+ideas in the following slides. The only new concrete thing I'm adding at this
+point is scheduling. 
 
 Slide Two
 
-This slide presents a simple problem that most systems currently fail on. Now
-is the time to present some technical questions. 
+This slide presents a simple problem that most systems currently fail on. It
+is standard for automated systems to push all possible work onto the GPU. 
+Now is the time to present some technical questions. 
 
 The code creates the computation graph. We then want to schedule that
 computation onto a CPU-GPU pair. The matrix multiply is well suited to the GPU
 but the sum is well suited to the CPU. Sending information across can be
 expensive.  How should we execute this computation on this architecture? 
 
-Using array operations here gives us predictable times and the ability to
+Using array operations here gives us predictable runtimes and the ability to
 trivially generate code for either architecture. 
 
 At this slide I would mention that exact solutions can be found to problems of
