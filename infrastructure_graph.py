@@ -9,6 +9,7 @@ def importall(view):
     view.execute('from computation_graph import *')
     view.execute('from theano_to_milp import togpu_data, tocpu_data')
     view.execute('import theano')
+    view.execute('from mpi4py import MPI')
 
 def apply_clone(ap):
     """
@@ -223,7 +224,7 @@ class Wire(Node):
     def __init__(self, A, B):
         self.A = A
         self.B = B
-    def send(self, var):
+    def transmit(self, var):
         raise NotImplementedError()
 
 class CPUWireCPU(Wire):
@@ -242,19 +243,19 @@ class MPIWire(CPUWireCPU):
             comm = MPI.COMM_WORLD
             return comm.Get_rank()
 
-        a = self.A.apply(init_comm)
-        b = self.B.apply(init_comm)
+        a = self.A.rc.apply(init_mpi)
+        b = self.B.rc.apply(init_mpi)
         self._a_rank = a.result
-        self._b_rank = a.result
+        self._b_rank = b.result
         return
 
     def get_ranks(self):
         def get_rank():
             return MPI.COMM_WORLD.Get_rank()
-        return self.A.apply(get_rank), self.B.apply(get_rank)
+        return self.A.rc.apply(get_rank), self.B.rc.apply(get_rank)
 
     @property
-    def rank(self):
+    def ranks(self):
         if self._a_rank and self._b_rank:
             return self._a_rank, self._b_rank
         else:
@@ -262,22 +263,34 @@ class MPIWire(CPUWireCPU):
 
     @property
     def a_rank(self):
-        return self.rank[0]
+        return self.ranks[0]
     @property
     def b_rank(self):
-        return self.rank[1]
+        return self.ranks[1]
 
     def transmit(self, var):
         assert var in self.A
-        B.instantiate_empty_variable(var)
-        a = B.do('comm.Recv(%s, source=%d, tag=13)'%(
-                B.local_name(var), self.a_rank))
-        b = A.do('comm.Send(%s, dest=%d, tag=13)'%(
-                A.local_name(var), self.b_rank))
+        self.B.instantiate_empty_variable(var)
+        a = self.B.do('MPI.COMM_WORLD.Recv(%s, source=%d, tag=13)'%(
+                self.B.local_name(var), self.a_rank))
+        b = self.A.do('MPI.COMM_WORLD.Send(%s, dest=%d, tag=13)'%(
+                self.A.local_name(var), self.b_rank))
 
         return a,b
 class ZMQWire(CPUWireCPU):
-    pass
+    def __init__(self, A, B):
+        self.A = A
+        self.B = B
+    def init_comm(self):
+        for W in [self.A, self.B]:
+            W.execute('from communicator import EngineCommunicator')
+            W.execute('if "com" not in globals(): com = EngineCommunicator()')
+        self.peers = {self.A : self.A.rc.apply_async(lambda : com.info),
+                      self.B : self.B.rc.apply_async(lambda : com.info)}
+        for W in [self.A, self.B]:
+            W.rc.apply_sync(lambda pdict: com.connect(pdict), peers)
+
+
 
 class CPUWireGPU(Wire):
     pass
@@ -315,10 +328,10 @@ class CommNetwork(object):
 
         return (endtime - starttime) / niter
 
-from IPython.parallel import Client
-rc = Client()
-view = rc[:]
-importall(view)
-A,B = rc[0], rc[1]
-C = CPUWorker(A)
-D = CPUWorker(B)
+#from IPython.parallel import Client
+#rc = Client()
+#view = rc[:]
+#importall(view)
+#A,B = rc[0], rc[1]
+#C = CPUWorker(A)
+#D = CPUWorker(B)
