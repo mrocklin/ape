@@ -33,8 +33,8 @@
 %=======================================================================
 \begin{frame}{APE - Array Primitives}
 
-\textbf{Desire:} 1000 line C programs are challenging to optimize. \\
-Our problems are well structured and can be expressed more concisely 
+\textbf{Issue:} 1000 line C programs are challenging to optimize. \\
+Our problems are well structured and can be expressed more concisely.
 This can facilitate otherwise infeasible optimization
 \vspace{10pt}
 
@@ -50,8 +50,7 @@ programmer and hardware.
 \item Hails from a familiar and well used syntax (MatLab)
 \item Well tuned software packages exist on a variety of architectures \\
 (i.e. BLAS/LAPACK implemented for both CPUs and GPUs) 
-\item Relatively predictable operation costs (memory and time) \\
-As a result optimization is easy
+\item Relatively predictable operation costs enable easy optimization 
 \item Forms a connection to Linear Algebra
 \item Lots of work already done by the Theano project
 \end{itemize}
@@ -141,7 +140,7 @@ Can we effectively schedule moderate sized problems?
 \begin{itemize}
 \item ILP scheduling is solvable at this scale\\ (slow but feasible)
 \item Approximation algorithms to ILP are well studied
-\item Heuristics exist in OR and embedded systems communities
+\item Heuristics exist in operations research and embedded systems literature 
 \end{itemize}
 \column{.4\textwidth}
 \begin{figure}
@@ -174,8 +173,8 @@ Can we effectively schedule moderate sized problems?
 %=======================================================================
 \begin{frame}{APE - Future Questions}
 
-This may be useful for moderate sized problems. Can this way of thinking be
-extended to larger issues? 
+This may be useful for moderate sized problems. \\
+Can this way of thinking be extended to larger issues? 
 
 \begin{itemize}
 \item Can we extend this to large distributed problems/systems?
@@ -183,10 +182,8 @@ extended to larger issues?
 I.e. can we build a good sparse MatVec for BlueGene
 \item Can we then use these operations as primitives in another layer? 
 \item What other domains use array based operations. Can we engage them?
-\item At what other levels might we want to build compilers? Linear Algebra?
 \item Can we build a stack of compilers \\
-\textit{gcc/nvcc $\rightarrow$ APE $\rightarrow$ Linear Algebra $\rightarrow$
-PDEs} \\
+\textit{gcc/nvcc $\rightarrow$ BLAS $\rightarrow$ LAPACK $\rightarrow$ APE $\rightarrow$ Linear Algebra $\rightarrow$ PDEs} \\
 such that we optimize a problem of moderate complexity at each step. 
 \end{itemize}
 \end{frame}
