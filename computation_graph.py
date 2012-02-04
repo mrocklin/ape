@@ -18,10 +18,10 @@ class TheanoJob(Job):
 
     @property
     def inputs(self):
-        return [TheanoVariable(var) for var in self._apply.inputs]
+        return [TheanoArrayVariable(var) for var in self._apply.inputs]
     @property
     def outputs(self):
-        return [TheanoVariable(var) for var in self._apply.outputs]
+        return [TheanoArrayVariable(var) for var in self._apply.outputs]
     @property
     def op(self):
         return self._apply.op
@@ -55,6 +55,56 @@ class TheanoJob(Job):
 
         return theano.function(inputs, output, mode=mode, name='test')
 
+    def compiler(self):
+        return TheanoJob(apply_clone(self._apply))
+
+class StartJob(Job):
+    def __init__(self, var):
+        self._output = var
+
+    def info(self):
+        return self._output, self.__class__
+
+    @property
+    def name(self):
+        return "Start_%s"%str(self._output)
+
+    @property
+    def outputs(self):
+        return [self._output]
+    @property
+    def inputs(self):
+        return []
+    def __str__(self):
+        return self.name
+    def compiler(self):
+        def f():
+            return 0
+        return f
+class EndJob(Job):
+    def __init__(self, var):
+        self._input = var
+
+    def info(self):
+        return self._input, self.__class__
+
+    @property
+    def name(self):
+        return "End_%s"%str(self._input)
+
+    @property
+    def outputs(self):
+        return []
+    @property
+    def inputs(self):
+        return [self._input]
+    def __str__(self):
+        return self.name
+    def compiler(self):
+        def f():
+            return 0
+        return f
+
 class TheanoVariable(Variable):
     def __init__(self, variable):
         self._variable = variable
@@ -74,12 +124,12 @@ class TheanoVariable(Variable):
     @property
     def from_job(self):
         if not self._variable.owner:
-            return None
+            return StartJob(self)
         return TheanoJob(self._variable.owner)
     @property
     def to_jobs(self):
         if all(isinstance(apply, str) for apply, idx in self._variable.clients):
-            return []
+            return [EndJob(self)]
         assert not any(isinstance(apply, str)
                 for apply, idx in self._variable.clients)
 
@@ -94,9 +144,13 @@ class TheanoVariable(Variable):
         return self._variable
 
 class TheanoArrayVariable(TheanoVariable):
+    known_shapes = {}
+
     def __init__(self, variable, shape=None):
         self._variable = variable
         self._shape = shape
+        if not shape and variable.name in TheanoArrayVariable.known_shapes:
+            self._shape = TheanoArrayVariable.known_shapes[variable.name]
 
     def type_check(self):
         super(TheanoArrayVariable, self).type_check()
@@ -124,3 +178,25 @@ def cpu_var_to_gpu_var(x):
     cpu_var = cuda.host_from_gpu(gpu_var)
     return gpu_var, cpu_var
     return cuda.host_from_gpu(cuda.CudaNdarrayVariable(type=type, name=name))
+
+def all_jobs(job):
+    jobs = set([])
+    def add(j):
+        if not j or j in jobs:
+            return
+        jobs.add(j)
+        for k in j.children+j.parents:
+            add(k)
+    add(job)
+    return jobs
+
+def apply_clone(ap):
+    """
+    Takes in an apply node in some larger Env context.
+    Returns the same apply/variables outside of the context
+    """
+    inputs = [inp.clone() for inp in ap.inputs]
+    output = ap.op(*inputs)
+    ap_new = output.owner
+    return ap_new
+

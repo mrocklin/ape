@@ -11,16 +11,6 @@ def importall(view):
     view.execute('import theano')
     view.execute('from mpi4py import MPI')
 
-def apply_clone(ap):
-    """
-    Takes in an apply node in some larger Env context.
-    Returns the same apply/variables outside of the context
-    """
-    inputs = [inp.clone() for inp in ap.inputs]
-    output = ap.op(*inputs)
-    ap_new = output.owner
-    return ap_new
-
 class Worker(Node):
     """
     run(job)
@@ -59,7 +49,7 @@ class Worker(Node):
 
         starttime = time.time()
         for i in xrange(niter):
-            self._run(job)
+            self._run(job).wait()
         endtime = time.time()
 
         return (endtime - starttime) / niter
@@ -103,6 +93,7 @@ class PUWorker(Worker):
     """
     This class contains shared code between CPU and GPU workers
     """
+
     def has(self, x):
         self.do('result = "%s" in globals()'%self.local_name(x))
         return self.rc['result']
@@ -121,9 +112,7 @@ class PUWorker(Worker):
     def _compile(self, job, gpu=None):
         assert gpu is not None
         name = self.local_name(job)
-        ap_new = apply_clone(job._apply)
-        self.rc['apply_%s'%name] = ap_new
-        self.do('job_%s = TheanoJob(apply_%s)'%(name, name))
+        self.rc['job_%s'%name] = job.compiler()
         self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
         res = self.do('%s.name = %s.name if hasattr(%s, "name") else %s'%(
             name, name, name, name))
@@ -141,6 +130,8 @@ class PUWorker(Worker):
             key = self.local_name(key)
         return self.rc[key]
 
+    def info(self):
+        return (self.rc, self.__class__)
 
 class GPUWorker(PUWorker):
 
@@ -257,10 +248,7 @@ class MPIWire(CPUWireCPU):
 
     @property
     def ranks(self):
-        if self._a_rank and self._b_rank:
-            return self._a_rank, self._b_rank
-        else:
-            return self.get_ranks()
+        return self._a_rank, self._b_rank
 
     @property
     def a_rank(self):
@@ -305,8 +293,8 @@ class CommNetwork(object):
     transfer :: Machine, Machine, Variable -> se
     predict_transfer_time :: Machine, Machine, Variable -> Time
     """
-    def __init__(self, *args):
-        raise NotImplementedError()
+    def __init__(self, wires):
+        self._wires = {(w.A, w.B):w for w in wires}
 
     def __getitem__(self, key):
         A,B = key
@@ -315,15 +303,21 @@ class CommNetwork(object):
     def transfer(self, A, B, V):
         wire = self[A,B]
         assert V in A, "Sending machine does not have variable %s"%V
-        wire.send(V)
+        wire.transmit(V)
 
     def predict_transfer_time(self, A, B, V, niter=10):
-        A.store_random_instance_of(V)
-        wire = self[A,B]
+        if A==B:
+            return 0
+        try:
+            wire = self[A,B]
+        except KeyError:
+            return -1
+
+        A.instantiate_random_variable(V)
 
         starttime = time.time()
         for i in xrange(niter):
-            wire.send(V) # make sure we block here
+            wire.transmit(V) # make sure we block here
 
         endtime = time.time()
 

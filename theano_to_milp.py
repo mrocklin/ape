@@ -71,3 +71,28 @@ def tocpu_data(x, copy=True):
     if isinstance(x, theano.sandbox.cuda.var.CudaNdarraySharedVariable):
         return x.get_value(return_internal_type=False)
     assert False
+
+def timings(f, machines, N, **kwargs):
+    from computation_graph import TheanoJob, all_jobs
+    job = TheanoJob(f.maker.env.outputs[0].owner)
+    jobs = all_jobs(job)
+    runtimes = {}
+    for machine in machines:
+        for job in jobs:
+            runtimes[machine, job] = machine.predict_runtime(job, **kwargs)
+
+    commtimes = defaultdict(lambda : 1e300)
+    for job in jobs:
+        for child in job.children:
+            variables = set(job.outputs).intersection(child.inputs)
+            for A in machines:
+                for B in machines:
+                    total_time = 0
+                    for V in variables:
+                        total_time += N.predict_transfer_time(A,B,V, **kwargs)
+                    commtimes[job,child,A,B] = total_time
+
+    return runtimes, commtimes
+
+
+
