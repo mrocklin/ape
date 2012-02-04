@@ -204,11 +204,9 @@ class CPUWorker(PUWorker):
     def instantiate_empty_variable(self, var):
         assert hasattr(var, 'shape') and hasattr(var, 'dtype')
         name = self.local_name(var)
-        self.rc['%s_shape'%name] = var.shape
-        self.rc['%s_dtype'%name] = var.dtype
 
-        return self.do('%s = np.empty(%s_shape, dtype=%s_dtype)'%(
-            name, name, name))
+        return self.do('%s = np.empty(%s, dtype="%s")'%(
+            name, str(var.shape), str(var.dtype))).result
 
 
 class Wire(Node):
