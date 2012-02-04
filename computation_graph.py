@@ -1,6 +1,7 @@
 from graph import Job, Variable, Node
 import theano
 import numpy as np
+from theano_to_milp import intermediate_shapes
 
 job_names = {}
 
@@ -27,7 +28,7 @@ class TheanoJob(Job):
 
     @property
     def name(self):
-        return "%s_%d"%(str(self.op), hash(self))
+        return "%s_%d"%(str(self.op), abs(hash(self)))
 
     def info(self):
         return self._apply
@@ -68,7 +69,7 @@ class TheanoVariable(Variable):
     @property
     def name(self):
         varname = self._variable.name or "var"
-        return "%s_%d"%(varname, hash(self))
+        return "%s_%d"%(varname, abs(hash(self)))
 
     @property
     def from_job(self):

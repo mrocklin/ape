@@ -251,6 +251,7 @@ class MPIWire(CPUWireCPU):
 
     def get_ranks(self):
         def get_rank():
+            from mpi4py import MPI
             return MPI.COMM_WORLD.Get_rank()
         return self.A.rc.apply(get_rank), self.B.rc.apply(get_rank)
 

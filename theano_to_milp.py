@@ -3,7 +3,6 @@ import theano
 import numpy as np
 import theano.tensor as T
 #from Job import *
-from computation_graph import TheanoJob, TheanoVariable
 from util import set_union
 
 tdp = theano.printing.debugprint
@@ -34,34 +33,19 @@ def all_applys(outputs):
                         variables.append(input)
     return applies
 
-def intermediate_shapes(inputs, outputs, numeric_inputs):
+def intermediate_shapes(inputs, outputs, shapes):
+    numeric_inputs = [np.ones(shape).astype(np.float32) for shape in shapes]
+
     apply_nodes = all_applys(outputs)
 
     intermediate_inputs = [i for an in apply_nodes for i in an.inputs]
 
     shapes = theano.function(inputs,
-            [iinp.shape for iinp in intermediate_inputs])
+            [var.shape for var in intermediate_inputs+outputs])
 
-    iinput_shape_dict = dict(zip(intermediate_inputs, shapes(*numeric_inputs)))
+    iinput_shape_dict = dict(zip(intermediate_inputs+outputs,
+                                 shapes(*numeric_inputs)))
     return iinput_shape_dict
-
-x = T.matrix('x')
-y = T.dot(x,x)
-z = y.sum()
-
-f = theano.function([x], z, mode=cpu_mode)
-an = f.maker.env.outputs[0].owner
-job = TheanoJob(an)
-
-def function_to_job_graph(f, shape_dict=None):
-    inputs, outputs = f.maker.env.inputs, f.maker.env.outputs
-    shape_dict = intermediate_shapes(inputs, outputs,
-            [np.ones(shape_dict[input]).astype(np.float32)
-            for input in inputs] )
-
-# Input types
-# CPU - np.ndarray
-# GPU - shared, CudaNdarray
 
 def togpu_data(x, copy=True):
     if isinstance(x, np.ndarray):
