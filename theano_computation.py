@@ -1,4 +1,4 @@
-from graph import Job, Variable, Node, Computation
+from computation import Job, Variable, Node, Computation
 import theano
 import numpy as np
 from theano_to_milp import intermediate_shapes

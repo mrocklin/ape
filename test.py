@@ -6,9 +6,10 @@ fast_run_cpu_only = theano.compile.optdb.query(
         theano.gof.Query(include = ['fast_run'], exclude=['gpu']))
 cpu_mode = theano.Mode(optimizer=fast_run_cpu_only, linker='py')
 
-from infrastructure_graph import (CPUWorker, GPUWorker, MPIWire, importall,
-        CommNetwork, CPUWireGPU, GPUWireCPU, ComputationalNetwork)
-from computation_graph import (TheanoArrayVariable, TheanoJob, TheanoVariable,
+from infrastructure import CommNetwork, ComputationalNetwork, CommNetwork
+from theano_infrastructure import (CPUWorker, GPUWorker, MPIWire, importall,
+        CPUWireGPU, GPUWireCPU)
+from theano_computation import (TheanoArrayVariable, TheanoJob, TheanoVariable,
         TheanoComputation, all_jobs)
 from theano_to_milp import intermediate_shapes
 
