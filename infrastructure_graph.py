@@ -3,6 +3,7 @@ from computation_graph import TheanoVariable, TheanoArrayVariable, TheanoJob
 from graph import Variable, Job
 from theano_to_milp import togpu_data, tocpu_data
 import time
+import theano
 
 def importall(view):
     view.execute('import numpy as np')
@@ -87,7 +88,10 @@ class Worker(Node):
         raise NotImplementedError()
 
 def has_gpu(remote):
-    return remote['theano.config.device'] == 'gpu'
+    def device():
+        import theano
+        return theano.config.device
+    return remote.rc.apply_sync(device) == 'gpu'
 
 class PUWorker(Worker):
     """
@@ -220,6 +224,10 @@ class Wire(Node):
     def info(self):
         return (self.A, self.B, self.__class__)
 
+    def type_check(self):
+        assert isinstance(self.A, Worker)
+        assert isinstance(self.B, Worker)
+
 class CPUWireCPU(Wire):
     def type_check(self):
         assert isinstance(self.A, CPUWorker)
@@ -237,10 +245,8 @@ class MPIWire(CPUWireCPU):
             comm = MPI.COMM_WORLD
             return comm.Get_rank()
 
-        a = self.A.rc.apply(init_mpi)
-        b = self.B.rc.apply(init_mpi)
-        self._a_rank = a.result
-        self._b_rank = b.result
+        self._a_rank = self.A.rc.apply_sync(init_mpi)
+        self._b_rank = self.B.rc.apply_sync(init_mpi)
         return
 
     def get_ranks(self):
@@ -286,7 +292,7 @@ class ZMQWire(CPUWireCPU):
 class CGPUWire(Wire):
 
     def type_check(self):
-        super(Wire, self).type_check()
+        super(CGPUWire, self).type_check()
         assert isinstance(self.cpu, CPUWorker)
         assert isinstance(self.gpu, GPUWorker)
         assert self.gpu.host == self.cpu
@@ -294,7 +300,7 @@ class CGPUWire(Wire):
     def transmit(self, var):
         cpuname = self.cpu.local_name(var)
         gpuname = self.gpu.local_name(var)
-        return self.cpu.rc.do('%s = togpu_data(%s)'%(gpuname, cpuname))
+        return self.cpu.do('%s = togpu_data(%s)'%(gpuname, cpuname))
 
 class CPUWireGPU(CGPUWire):
     def __init__(self, A, B):

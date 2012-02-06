@@ -7,7 +7,7 @@ fast_run_cpu_only = theano.compile.optdb.query(
 cpu_mode = theano.Mode(optimizer=fast_run_cpu_only, linker='py')
 
 from infrastructure_graph import (CPUWorker, GPUWorker, MPIWire, importall,
-        CommNetwork)
+        CommNetwork, CPUWireGPU, GPUWireCPU)
 from computation_graph import (TheanoArrayVariable, TheanoJob, TheanoVariable,
         all_jobs)
 from theano_to_milp import intermediate_shapes
@@ -19,6 +19,10 @@ view = rc[:]
 importall(view)
 a,b,c = rc[0], rc[1], rc[2]
 A,B,C = map(CPUWorker, (a,b,c))
+try:
+    G = GPUWorker(C)
+except:
+    pass
 
 x = T.matrix('x')
 y = T.dot(x,x); y.name = 'y'
@@ -49,4 +53,6 @@ assert all(output in B for output in job.outputs)
 
 # Set up communication network
 wires = [MPIWire(a,b) for a in [A,B,C] for b in [A,B,C] if a!=b]
+try:    wires += [CPUWireGPU(C,G), GPUWireCPU(G,C)]
+except: pass
 N = CommNetwork(wires)
