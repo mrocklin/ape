@@ -213,13 +213,18 @@ class Wire(Node):
     def __init__(self, A, B):
         self.A = A
         self.B = B
+
     def transmit(self, var):
         raise NotImplementedError()
+
+    def info(self):
+        return (self.A, self.B, self.__class__)
 
 class CPUWireCPU(Wire):
     def type_check(self):
         assert isinstance(self.A, CPUWorker)
         assert isinstance(self.B, CPUWorker)
+
 class MPIWire(CPUWireCPU):
     def __init__(self, A, B):
         self.A = A
@@ -278,12 +283,30 @@ class ZMQWire(CPUWireCPU):
             W.rc.apply_sync(lambda pdict: com.connect(pdict), peers)
 
 
+class CGPUWire(Wire):
 
-class CPUWireGPU(Wire):
-    pass
-class GPUWireCPU(Wire):
-    pass
+    def type_check(self):
+        super(Wire, self).type_check()
+        assert isinstance(self.cpu, CPUWorker)
+        assert isinstance(self.gpu, GPUWorker)
+        assert self.gpu.host == self.cpu
 
+    def transmit(self, var):
+        cpuname = self.cpu.local_name(var)
+        gpuname = self.gpu.local_name(var)
+        return self.cpu.rc.do('%s = togpu_data(%s)'%(gpuname, cpuname))
+
+class CPUWireGPU(CGPUWire):
+    def __init__(self, A, B):
+        self.cpu = self.A = A
+        self.gpu = self.B = B
+        self.type_check()
+
+class GPUWireCPU(CGPUWire):
+    def __init__(self, A, B):
+        self.gpu = self.A = A
+        self.cpu = self.B = B
+        self.type_check()
 
 class CommNetwork(object):
     """
