@@ -1,4 +1,4 @@
-from graph import Job, Variable, Node
+from graph import Job, Variable, Node, Computation
 import theano
 import numpy as np
 from theano_to_milp import intermediate_shapes
@@ -81,6 +81,7 @@ class StartJob(Job):
         def f():
             return 0
         return f
+
 class EndJob(Job):
     def __init__(self, var):
         self._input = var
@@ -168,6 +169,31 @@ class TheanoArrayVariable(TheanoVariable):
     def dtype(self):
         return self._variable.dtype
 
+class TheanoComputation(Computation):
+    def __init__(self, f, shapes):
+        self.f = f
+        self.known_shapes = shapes
+
+    def type_check(self):
+        assert isinstance(f, theano.function)
+        assert isinstance(shapes, dict)
+
+    @property
+    def env(self):
+        return self.f.maker.env
+
+    @property
+    def inputs(self):
+        return [TheanoArrayVariable(var, self.known_shapes[var.name])
+                for var in self.env.inputs]
+    @property
+    def outputs(self):
+        return [TheanoArrayVariable(var, self.known_shapes[var.name])
+                for var in self.env.outputs]
+
+    @property
+    def start_jobs(self):
+        return map(StartJob, self.inputs)
 
 def cpu_var_to_gpu_var(x):
     from theano.sandbox import cuda

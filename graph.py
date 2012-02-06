@@ -1,4 +1,5 @@
 import itertools
+from collections import defaultdict
 
 def is_ordered_iterator(x):
     return isinstance(x, (list, tuple))
@@ -131,3 +132,44 @@ class Variable(Node):
             return [self.from_job]
         else:
             return []
+
+class Computation(object):
+
+    @property
+    def jobs(self):
+        s = set()
+        def add_descendents(job):
+            if job in s:
+                return
+            s.add(job)
+            for child in job.children:
+                add_descendents(child)
+
+        for job in self.start_jobs:
+            add_descendents(job)
+        return s
+
+    @property
+    def variables(self):
+        s = set()
+        for job in self.jobs:
+            for var in job.inputs+job.outputs:
+                s.add(var)
+        return s
+
+    def precedence(self):
+        P = defaultdict(lambda:0)
+        visited = set()
+        def add_precedence_info(j):
+            if j in visited:
+                return
+            visited.add(job)
+            for child in j.children:
+                P[child,j] = 1 # child comes before j
+                add_precedence_info(child)
+
+        # Start recursion from each of the inputs
+        for job in self.start_jobs:
+                add_precedence_info(job)
+        return P
+

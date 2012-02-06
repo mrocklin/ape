@@ -350,6 +350,11 @@ class CommNetwork(object):
 
         return (endtime - starttime) / niter
 
+class ComputationalNetwork(object):
+    def __init__(self, machines, comm):
+        self.machines = machines
+        self.comm = comm
+
 #from IPython.parallel import Client
 #rc = Client()
 #view = rc[:]

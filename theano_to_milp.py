@@ -11,16 +11,6 @@ fast_run_cpu_only = theano.compile.optdb.query(
         theano.gof.Query(include = ['fast_run'], exclude=['gpu']))
 cpu_mode = theano.Mode(optimizer=fast_run_cpu_only, linker='py')
 
-def precedence_dict(job):
-    u = defaultdict(lambda:0)
-    def add_precedence_info(j):
-        for child in j.children:
-            P[child,j] = 1 # child comes before j
-            add_precedence_info(child)
-
-    add_precedence_info(job)
-    return P
-
 def all_applys(outputs):
     applies = set()
     variables = list(outputs)
@@ -72,10 +62,11 @@ def tocpu_data(x, copy=True):
         return x.get_value(return_internal_type=False)
     assert False
 
-def timings(f, machines, N, **kwargs):
-    from computation_graph import TheanoJob, all_jobs
-    job = TheanoJob(f.maker.env.outputs[0].owner)
-    jobs = all_jobs(job)
+def timings(computation, system, **kwargs):
+    jobs = computation.jobs
+    machines = system.machines
+    N = system.comm
+
     runtimes = {}
     for machine in machines:
         for job in jobs:
