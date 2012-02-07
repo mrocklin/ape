@@ -2,6 +2,8 @@ from graph import Node
 from computation import Variable, Job
 import time
 
+a_big_number = 1e9
+
 class Worker(Node):
     """
     run(job)
@@ -36,7 +38,7 @@ class Worker(Node):
             if not var in self:
                 self.instantiate_random_variable(var)
         if not job in self:
-            self.compile(job)
+            self.compile(job, block=True)
 
         starttime = time.time()
         for i in xrange(niter):
@@ -132,7 +134,7 @@ class CommNetwork(object):
         try:
             wire = self[A,B]
         except KeyError:
-            return -1
+            return a_big_number
 
         A.instantiate_random_variable(V)
 

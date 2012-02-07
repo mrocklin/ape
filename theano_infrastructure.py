@@ -30,13 +30,15 @@ class PUWorker(Worker):
         assert isinstance(job, Job)
         return self.has(job)
 
-    def _compile(self, job, gpu=None):
+    def _compile(self, job, gpu=None, block=False):
         assert gpu is not None
         name = self.local_name(job)
         self.rc['job_%s'%name] = job.compiler()
         self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
         res = self.do('%s.name = %s.name if hasattr(%s, "name") else %s'%(
             name, name, name, name))
+        if block:
+            res = res.result
         return res
 
     def _run(self, job):
@@ -62,8 +64,8 @@ class GPUWorker(PUWorker):
         assert has_gpu(host), "Can not create a GPUWorker on %s"%str(host)
         self.rc = host.rc
 
-    def compile(self, job):
-        return self._compile(job, gpu=True)
+    def compile(self, job, block=False):
+        return self._compile(job, gpu=True, block=block)
 
     def instantiate_random_variable(self, var):
         var_previously_on_host = var in self.host
@@ -114,8 +116,8 @@ class CPUWorker(PUWorker):
     def name(self):
         return str(self.rc.targets)
 
-    def compile(self, job):
-        return self._compile(job, gpu=False)
+    def compile(self, job, block=False):
+        return self._compile(job, gpu=False, block=block)
 
     def instantiate_random_variable(self, var):
         assert hasattr(var, 'shape') and hasattr(var, 'dtype')
