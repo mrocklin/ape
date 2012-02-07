@@ -59,6 +59,12 @@ class TheanoJob(Job):
     def compiler(self):
         return TheanoJob(apply_clone(self._apply))
 
+class simplecompiler(object):
+    def __init__(self):
+        pass
+    def function(self, *args, **kwargs):
+        return lambda :0
+
 class StartOrEndJob(Job):
     def __init__(self, var):
         self._var = var
@@ -73,7 +79,7 @@ class StartOrEndJob(Job):
         return lambda : 0
 
     def compiler(self):
-        return self
+        return simplecompiler()
 
 class StartJob(StartOrEndJob):
 

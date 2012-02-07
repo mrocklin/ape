@@ -73,7 +73,6 @@ class Worker(Node):
 
     def local_name(self, x):
         return self.__class__.cls_local_name(x)
-        return x.name
 
     _name_prefix = "AAA"
     _name_dict = {}

@@ -48,9 +48,18 @@ w = z+zz; w.name = 'w'
 f = theano.function([x, xx], w, mode=cpu_mode)
 # f = theano.function([x], z, mode=cpu_mode)
 
-shapes = intermediate_shapes([x,xx], [w], [(3000,3000), (3000,3000)])
+x = T.matrix('x')
+xx = T.dot(x, x)
+xxx = T.dot(xx, xx)
+xxxx = T.dot(xxx, xxx)
+z = xxxx
+f = theano.function([x], z, mode=cpu_mode)
+
+
+
+#shapes = intermediate_shapes([x,xx], [w], [(3000,3000), (3000,3000)])
 #shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (500,500)])
-#shapes = intermediate_shapes([x], [z], [(1000,1000)])
+shapes = intermediate_shapes([x], [z], [(3000,3000)])
 
 def tuplify_shape(shape):
     shape = tuple(shape)
@@ -60,8 +69,8 @@ def tuplify_shape(shape):
 shapes = {key.name:tuplify_shape(value) for key, value in shapes.items()}
 
 #computation = TheanoComputation(f, [(1000,1000), (500,500)])
-#computation = TheanoComputation(f, [(1000,1000)])
-computation = TheanoComputation(f, [(1000,1000), (1000,1000)])
+computation = TheanoComputation(f, [(3000,3000)])
+#computation = TheanoComputation(f, [(1000,1000), (1000,1000)])
 
 TheanoArrayVariable.known_shapes = shapes
 

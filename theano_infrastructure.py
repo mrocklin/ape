@@ -69,6 +69,7 @@ class PUWorker(Worker):
 
 class GPUWorker(PUWorker):
     _name_prefix = 'gpu'
+    _name_dict = {}
 
     def __init__(self, host):
         self.host = host
@@ -99,16 +100,13 @@ class GPUWorker(PUWorker):
                       name,                              str(var.shape)))
         return res
 
-    def local_name(self, var):
-        return self.__class__.cls_local_name(var)
-        #return "gpu_"+var.name
-
     @property
     def name(self):
         return self.host.name+"_gpu"
 
 class CPUWorker(PUWorker):
     _name_prefix = 'cpu'
+    _name_dict = {}
 
     def __init__(self, remote):
         self.rc = remote
