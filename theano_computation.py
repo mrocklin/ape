@@ -172,7 +172,7 @@ class TheanoArrayVariable(TheanoVariable):
 class TheanoComputation(Computation):
     def __init__(self, f, shapes):
         self.f = f
-        self.known_shapes = shapes
+        self.known_shapes = self.compute_known_shapes(shapes)
 
     def type_check(self):
         assert isinstance(f, theano.function)
@@ -194,6 +194,39 @@ class TheanoComputation(Computation):
     @property
     def start_jobs(self):
         return map(StartJob, self.inputs)
+
+    def compute_known_shapes(self, inputshapes):
+        variables = set()
+        def get_variables(v):
+            if v in variables:
+                return
+            variables.add(v)
+            for client, index in v.clients:
+                if isinstance(client, str): return
+                for var in client.outputs:
+                    get_variables(var)
+
+        inputs = self.env.inputs
+        for var in inputs:
+            get_variables(var)
+
+        shape_outputs = [var.shape for var in variables]
+        compute_shapes = theano.function(inputs, shape_outputs)
+
+        def tuplify_shape(shape):
+            if len(shape)==0:   return (1,)
+            else:               return tuple(shape)
+
+        numeric_inputs = [np.ones(shape).astype(np.float32)
+                for shape in inputshapes]
+
+        shapes = compute_shapes(*numeric_inputs)
+        # known_shapes = dict(zip(variables, map(tuplify_shape, shapes)))
+        known_shapes = dict()
+        for var, shape in zip(variables, shapes):
+            known_shapes[var.name] = tuplify_shape(shape)
+
+        return known_shapes
 
 def cpu_var_to_gpu_var(x):
     from theano.sandbox import cuda

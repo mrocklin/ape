@@ -3,7 +3,6 @@ from util import is_ordered_iterator
 from theano_computation import (TheanoVariable, TheanoArrayVariable, TheanoJob,
         Variable, Job)
 from infrastructure import Worker, Wire
-from theano_to_milp import togpu_data, tocpu_data
 import time
 import theano
 
@@ -133,7 +132,7 @@ class CPUWorker(PUWorker):
 def importall(view):
     view.execute('import numpy as np')
     view.execute('from theano_computation import *')
-    view.execute('from theano_to_milp import togpu_data, tocpu_data')
+    view.execute('from theano_infrastructure import togpu_data, tocpu_data')
     view.execute('import theano')
     view.execute('from mpi4py import MPI')
 
@@ -216,22 +215,52 @@ class CGPUWire(Wire):
         assert isinstance(self.gpu, GPUWorker)
         assert self.gpu.host == self.cpu
 
-    def transmit(self, var):
-        cpuname = self.cpu.local_name(var)
-        gpuname = self.gpu.local_name(var)
-        return self.cpu.do('%s = togpu_data(%s)'%(gpuname, cpuname))
-
 class CPUWireGPU(CGPUWire):
     def __init__(self, A, B):
         self.cpu = self.A = A
         self.gpu = self.B = B
         self.type_check()
+    def transmit(self, var):
+        cpuname = self.cpu.local_name(var)
+        gpuname = self.gpu.local_name(var)
+        return self.cpu.do('%s = togpu_data(%s)'%(gpuname, cpuname))
+
 
 class GPUWireCPU(CGPUWire):
     def __init__(self, A, B):
         self.gpu = self.A = A
         self.cpu = self.B = B
         self.type_check()
+    def transmit(self, var):
+        cpuname = self.cpu.local_name(var)
+        gpuname = self.gpu.local_name(var)
+        return self.cpu.do('%s = tocpu_data(%s)'%(cpuname, gpuname))
+
+
+def togpu_data(x, copy=True):
+    if isinstance(x, np.ndarray):
+        return theano.sandbox.cuda.shared_constructor(x).get_value(
+                borrow=True, return_internal_type=True)
+    if isinstance(x, theano.sandbox.cuda.CudaNdarray):
+        if copy:
+            return x.copy()
+        else:
+            return x
+    if isinstance(x, theano.sandbox.cuda.var.CudaNdarraySharedVariable):
+        return xg.get_value(return_internal_type=True, borrow=copy)
+    assert False
+
+def tocpu_data(x, copy=True):
+    if isinstance(x, theano.sandbox.cuda.CudaNdarray):
+        return np.asarray(x)
+    if isinstance(x, np.ndarray):
+        if copy:
+            return x.copy()
+        else:
+            return x
+    if isinstance(x, theano.sandbox.cuda.var.CudaNdarraySharedVariable):
+        return x.get_value(return_internal_type=False)
+    assert False
 
 #from IPython.parallel import Client
 #rc = Client()

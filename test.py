@@ -50,7 +50,7 @@ def tuplify_shape(shape):
     return shape
 shapes = {key.name:tuplify_shape(value) for key, value in shapes.items()}
 
-computation = TheanoComputation(f, shapes)
+computation = TheanoComputation(f, [(1000,1000)])
 
 TheanoArrayVariable.known_shapes = shapes
 

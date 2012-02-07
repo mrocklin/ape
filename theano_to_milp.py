@@ -37,31 +37,6 @@ def intermediate_shapes(inputs, outputs, shapes):
                                  shapes(*numeric_inputs)))
     return iinput_shape_dict
 
-def togpu_data(x, copy=True):
-    if isinstance(x, np.ndarray):
-        return theano.sandbox.cuda.shared_constructor(x).get_value(
-                borrow=True, return_internal_type=True)
-    if isinstance(x, theano.sandbox.cuda.CudaNdarray):
-        if copy:
-            return x.copy()
-        else:
-            return x
-    if isinstance(x, theano.sandbox.cuda.var.CudaNdarraySharedVariable):
-        return xg.get_value(return_internal_type=True, borrow=copy)
-    assert False
-
-def tocpu_data(x, copy=True):
-    if isinstance(x, theano.sandbox.cuda.CudaNdarray):
-        return np.asarray(x)
-    if isinstance(x, np.ndarray):
-        if copy:
-            return x.copy()
-        else:
-            return x
-    if isinstance(x, theano.sandbox.cuda.var.CudaNdarraySharedVariable):
-        return x.get_value(return_internal_type=False)
-    assert False
-
 def timings(computation, system, **kwargs):
     jobs = computation.jobs
     machines = system.machines
