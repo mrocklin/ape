@@ -32,11 +32,22 @@ class PUWorker(Worker):
 
     def _compile(self, job, gpu=None, block=False):
         assert gpu is not None
-        name = self.local_name(job)
-        self.rc['job_%s'%name] = job.compiler()
-        self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
-        res = self.do('%s.name = %s.name if hasattr(%s, "name") else %s'%(
-            name, name, name, name))
+        fnname = self.local_name(job)
+        compilername = 'compiler_%s'%fnname
+
+        # Push compilation object (likely a TheanoJob clone)
+        res = self.rc.push({compilername: job.compiler()})
+        res.wait(); assert res.successful()
+
+        # Tell remote to compile the function locally
+        res = self.do('%s = %s.function(gpu=%s)'%
+                (fnname, compilername, str(gpu)))
+        res.wait(); assert res.successful()
+
+        # Sometimes names are lost in the cloning process. Ensure its ok
+        res = self.do('%s.name = %s.name if hasattr(%s, "name") else "%s"'%(
+            fnname, fnname, fnname, fnname))
+        res.wait(); assert res.successful()
         if block:
             res = res.result
         return res

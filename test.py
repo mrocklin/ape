@@ -48,7 +48,7 @@ w = z+zz; w.name = 'w'
 f = theano.function([x, xx], w, mode=cpu_mode)
 # f = theano.function([x], z, mode=cpu_mode)
 
-shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (1000,1000)])
+shapes = intermediate_shapes([x,xx], [w], [(3000,3000), (3000,3000)])
 #shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (500,500)])
 #shapes = intermediate_shapes([x], [z], [(1000,1000)])
 

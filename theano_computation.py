@@ -59,53 +59,45 @@ class TheanoJob(Job):
     def compiler(self):
         return TheanoJob(apply_clone(self._apply))
 
-class StartJob(Job):
+class StartOrEndJob(Job):
     def __init__(self, var):
-        self._output = var
+        self._var = var
 
     def info(self):
-        return self._output, self.__class__
+        return self._var, self.__class__
+
+    def __str__(self):
+        return self.name
+
+    def function(*args, **kwargs):
+        return lambda : 0
+
+    def compiler(self):
+        return self
+
+class StartJob(StartOrEndJob):
 
     @property
     def name(self):
-        return "Start_%s"%str(self._output)
-
+        return "Start_%s"%str(self._var)
     @property
     def outputs(self):
-        return [self._output]
+        return [self._var]
     @property
     def inputs(self):
         return []
-    def __str__(self):
-        return self.name
-    def compiler(self):
-        def f():
-            return 0
-        return f
 
-class EndJob(Job):
-    def __init__(self, var):
-        self._input = var
-
-    def info(self):
-        return self._input, self.__class__
+class EndJob(StartOrEndJob):
 
     @property
     def name(self):
-        return "End_%s"%str(self._input)
-
+        return "End_%s"%str(self._var)
     @property
     def outputs(self):
         return []
     @property
     def inputs(self):
-        return [self._input]
-    def __str__(self):
-        return self.name
-    def compiler(self):
-        def f():
-            return 0
-        return f
+        return [self._var]
 
 class TheanoVariable(Variable):
     def __init__(self, variable):
