@@ -4,14 +4,16 @@ tdp = theano.printing.debugprint
 fast_run = theano.compile.optdb.query(theano.gof.Query(include = ['fast_run']))
 fast_run_cpu_only = theano.compile.optdb.query(
         theano.gof.Query(include = ['fast_run'], exclude=['gpu']))
-cpu_mode = theano.Mode(optimizer=fast_run_cpu_only, linker='py')
+fast_run_no_inplace = theano.compile.optdb.query(
+        theano.gof.Query(include = ['fast_run'], exclude = ['inplace', 'gpu']))
+cpu_mode = theano.Mode(optimizer=fast_run_no_inplace, linker='py')
 
 from infrastructure import CommNetwork, ComputationalNetwork, CommNetwork
 from theano_infrastructure import (CPUWorker, GPUWorker, MPIWire, importall,
         CPUWireGPU, GPUWireCPU)
 from theano_computation import (TheanoArrayVariable, TheanoJob, TheanoVariable,
         TheanoComputation, all_jobs)
-from theano_to_milp import intermediate_shapes
+from theano_to_milp import intermediate_shapes, make_ilp, compute_schedule
 
 from IPython.parallel import Client
 
@@ -36,12 +38,19 @@ network = CommNetwork(wires)
 system = ComputationalNetwork(machines, network)
 
 # Make a computation
+xx = T.matrix('xx')
+yy = T.dot(xx,xx); yy.name = 'yy'
+zz = yy.sum(); zz.name = 'zz'
 x = T.matrix('x')
 y = T.dot(x,x); y.name = 'y'
 z = y.sum(); z.name = 'z'
-f = theano.function([x], z, mode=cpu_mode)
+w = z+zz; w.name = 'w'
+f = theano.function([x, xx], w, mode=cpu_mode)
+# f = theano.function([x], z, mode=cpu_mode)
 
-shapes = intermediate_shapes([x], [z], [(1000,1000)])
+shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (1000,1000)])
+#shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (500,500)])
+#shapes = intermediate_shapes([x], [z], [(1000,1000)])
 
 def tuplify_shape(shape):
     shape = tuple(shape)
@@ -50,10 +59,14 @@ def tuplify_shape(shape):
     return shape
 shapes = {key.name:tuplify_shape(value) for key, value in shapes.items()}
 
-computation = TheanoComputation(f, [(1000,1000)])
+#computation = TheanoComputation(f, [(1000,1000), (500,500)])
+#computation = TheanoComputation(f, [(1000,1000)])
+computation = TheanoComputation(f, [(1000,1000), (1000,1000)])
 
 TheanoArrayVariable.known_shapes = shapes
 
+prob, X, S, Cmax = make_ilp(computation, system, A, niter=3)
+sched = compute_schedule(prob, X, S, Cmax)
 
 
 def test_single_wire():

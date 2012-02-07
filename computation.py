@@ -135,7 +135,7 @@ class Computation(object):
                 return
             visited.add(job)
             for child in j.children:
-                P[child,j] = 1 # child comes before j
+                P[j,child] = 1 # j precedes child
                 add_precedence_info(child)
 
         # Start recursion from each of the inputs

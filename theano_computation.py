@@ -18,7 +18,8 @@ class TheanoJob(Job):
 
     @property
     def inputs(self):
-        return [TheanoArrayVariable(var) for var in self._apply.inputs]
+        return [TheanoArrayVariable(var) for var in self._apply.inputs
+                if not isinstance(var, theano.Constant)]
     @property
     def outputs(self):
         return [TheanoArrayVariable(var) for var in self._apply.outputs]
@@ -194,6 +195,9 @@ class TheanoComputation(Computation):
     @property
     def start_jobs(self):
         return map(StartJob, self.inputs)
+    @property
+    def end_jobs(self):
+        return map(EndJob, self.outputs)
 
     def compute_known_shapes(self, inputshapes):
         variables = set()
@@ -256,6 +260,7 @@ def apply_clone(ap):
     """
     inputs = [inp.clone() for inp in ap.inputs]
     output = ap.op(*inputs)
+    if isinstance(output, list): output = output[0]
     ap_new = output.owner
     return ap_new
 

@@ -70,7 +70,22 @@ class Worker(Node):
             return self.has_function(x)
 
     def local_name(self, x):
+        return self.__class__.cls_local_name(x)
         return x.name
+
+    _name_prefix = "AAA"
+    _name_dict = {}
+    _count = 0
+    @classmethod
+    def cls_local_name(cls, var):
+        if var in cls._name_dict:
+            return cls._name_dict[var]
+        else:
+            name = "%s_%d"%(cls._name_prefix,cls._count)
+            cls._count += 1
+            cls._name_dict[var] = name
+            return name
+
 
     def instantiate_random_variable(self, var):
         raise NotImplementedError()
