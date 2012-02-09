@@ -157,7 +157,7 @@ class TheanoArrayVariable(TheanoVariable):
         assert isinstance(self._variable, theano.tensor.TensorVariable)
 
     def get_shape(self):
-        if not self._shape:
+        if self._shape is None:
             raise ValueError("Have not yet specified shape for %s"%(str(self)))
         return self._shape
     def set_shape(self):
@@ -216,8 +216,9 @@ class TheanoComputation(Computation):
         compute_shapes = theano.function(inputs, shape_outputs)
 
         def tuplify_shape(shape):
-            if len(shape)==0:   return (1,)
-            else:               return tuple(shape)
+            #if len(shape)==0:   return (1,)
+            #else:               return tuple(shape)
+            return tuple(shape)
 
         numeric_inputs = [np.ones(shape).astype(np.float32)
                 for shape in inputshapes]

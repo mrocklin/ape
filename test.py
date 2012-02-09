@@ -14,6 +14,7 @@ from theano_infrastructure import (CPUWorker, GPUWorker, MPIWire, importall,
 from theano_computation import (TheanoArrayVariable, TheanoJob, TheanoVariable,
         TheanoComputation, all_jobs)
 from theano_to_milp import intermediate_shapes, make_ilp, compute_schedule
+from theano_to_milp import compute_runtimes,  compute_commtimes
 
 from IPython.parallel import Client
 
@@ -38,39 +39,53 @@ network = CommNetwork(wires)
 system = ComputationalNetwork(machines, network)
 
 # Make a computation
-xx = T.matrix('xx')
-yy = T.dot(xx,xx); yy.name = 'yy'
-zz = yy.sum(); zz.name = 'zz'
-x = T.matrix('x')
-y = T.dot(x,x); y.name = 'y'
-z = y.sum(); z.name = 'z'
-w = z+zz; w.name = 'w'
-f = theano.function([x, xx], w, mode=cpu_mode)
-# f = theano.function([x], z, mode=cpu_mode)
+n = 6
+xs = [T.matrix('x_%d'%i) for i in range(n)]
+ys, zs = [],[]
+for i, x in enumerate(xs):
+    y = T.dot(x,x); y.name = 'y_%d'%i
+    z = y.sum(); z.name = 'z_%d'%i
+    ys.append(y); zs.append(z)
 
+#ys = [T.dot(x,x) for x in xs];
+#zs = [y.sum() for y in ys]
+w = sum(zs); w.name = 'w'
+#xx = T.matrix('xx')
+#yy = T.dot(xx,xx); yy.name = 'yy'
+#zz = yy.sum(); zz.name = 'zz'
+#x = T.matrix('x')
+#y = T.dot(x,x); y.name = 'y'
+#z = y.sum(); z.name = 'z'
+#w = z+zz; w.name = 'w'
+#f = theano.function([x, xx], w, mode=cpu_mode)
+#shapes = intermediate_shapes([x,xx], [w], [(3000,3000), (3000,3000)])
+#computation = TheanoComputation(f, [(3000,3000), (3000,3000)])
+f = theano.function(xs, w, mode=cpu_mode)
+shapes = intermediate_shapes(xs, [w], [(3000,3000)]*n)
+computation = TheanoComputation(f, [(3000,3000)]*n)
+# f = theano.function([x], z, mode=cpu_mode)
+s = """
 x = T.matrix('x')
 xx = T.dot(x, x)
 xxx = T.dot(xx, xx)
 xxxx = T.dot(xxx, xxx)
 z = xxxx
-f = theano.function([x], z, mode=cpu_mode)
-
-
-
-#shapes = intermediate_shapes([x,xx], [w], [(3000,3000), (3000,3000)])
-#shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (500,500)])
+g = theano.function([x], z, mode=cpu_mode)
 shapes = intermediate_shapes([x], [z], [(3000,3000)])
+computation = TheanoComputation(g, [(3000,3000)])
+"""
+
+
+#shapes = intermediate_shapes([x,xx], [w], [(1000,1000), (500,500)])
+#gshapes = intermediate_shapes([x], [z], [(3000,3000)])
 
 def tuplify_shape(shape):
-    shape = tuple(shape)
-    if shape==tuple():
-        shape = (1,)
-    return shape
+    #if len(shape)==0:   return (1,)
+    #else:               return tuple(shape)
+    return tuple(shape)
 shapes = {key.name:tuplify_shape(value) for key, value in shapes.items()}
 
 #computation = TheanoComputation(f, [(1000,1000), (500,500)])
-computation = TheanoComputation(f, [(3000,3000)])
-#computation = TheanoComputation(f, [(1000,1000), (1000,1000)])
 
 TheanoArrayVariable.known_shapes = shapes
 

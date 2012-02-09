@@ -157,12 +157,12 @@ def make_ilp(computation, system, startmachine, **kwargs):
     for a,b in PP:
         P[name(a), name(b)] = PP[a,b]
     B = B_machine_ability(computation, system, startmachine)
-    runtimes  = compute_runtimes( computation, system, **kwargs)
+    runtimes  =  compute_runtimes(computation, system, **kwargs)
     commtimes = compute_commtimes(computation, system, **kwargs)
     D = runtimes
     C = commtimes
     R = defaultdict(lambda:0)
-    M = 100 # TODO
+    M = 10# 100 # TODO
     prob, X, S, Cmax = schedule(Jobs, Agents, D, C, R, B, P, M)
 
     return prob, X, S, Cmax

@@ -5,6 +5,7 @@ from theano_computation import (TheanoVariable, TheanoArrayVariable, TheanoJob,
 from infrastructure import Worker, Wire
 import time
 import theano
+import numpy as np
 
 ###########
 # Workers #
@@ -54,8 +55,8 @@ class PUWorker(Worker):
 
     def _run(self, job):
         name = self.local_name
-        outputs = ','.join([name(o) for o in job.outputs])
-        inputs = ','.join([name(i) for i in job.inputs])
+        outputs = ', '.join([name(o) for o in job.outputs])
+        inputs = ', '.join([name(i) for i in job.inputs])
 
         return self.do('%s = %s(%s)'%(outputs, name(job), inputs))
 
@@ -66,6 +67,9 @@ class PUWorker(Worker):
 
     def info(self):
         return (self.rc, self.__class__)
+
+    def delete(self, var):
+        return self.do('del %s'%self.local_name(var))
 
 class GPUWorker(PUWorker):
     _name_prefix = 'gpu'

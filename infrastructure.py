@@ -14,6 +14,9 @@ class Worker(Node):
     compile(job)
     store_random_instance_of(var)
     """
+    def detete(self, var):
+        raise NotImplementedError()
+
     def type_check(self):
         assert is_ordered_iterator(self.in_wires)
         assert is_ordered_iterator(self.out_wires)
@@ -25,18 +28,19 @@ class Worker(Node):
 
     def run(self, job):
         for var in job.inputs:
-            assert var in self, "Variable not present on Worker"
-        assert job in self, "Job not yet compiled on Worker"
+            assert var in self, "Input Variable %s not present on Worker"%var
+        assert job in self, "Job %s not yet compiled on Worker"%job
 
-        self._run(job)
+        res = self._run(job)
+        assert res.result is None # check for raised errors
 
         for var in job.outputs:
             assert var in self, "Output variable not produced"
 
     def predict_runtime(self, job, niter=10):
         for var in job.inputs:
-            if not var in self:
-                self.instantiate_random_variable(var)
+        #    if not var in self:
+            self.instantiate_random_variable(var)
         if not job in self:
             self.compile(job, block=True)
 
@@ -45,6 +49,9 @@ class Worker(Node):
             self._run(job).wait()
         endtime = time.time()
 
+        for var in job.inputs+job.outputs:
+            res = self.delete(var)
+        res.result
         return (endtime - starttime) / niter
 
     def can_compute(self, job):
@@ -79,10 +86,14 @@ class Worker(Node):
     _count = 0
     @classmethod
     def cls_local_name(cls, var):
+        if   isinstance(var, Variable):         var_prefix = 'var'
+        elif isinstance(var, Job):              var_prefix = 'job'
+        else:                                   var_prefix = ''
+
         if var in cls._name_dict:
             return cls._name_dict[var]
         else:
-            name = "%s_%d"%(cls._name_prefix,cls._count)
+            name = "%s_%s_%d"%(cls._name_prefix, var_prefix, cls._count)
             cls._count += 1
             cls._name_dict[var] = name
             return name
@@ -123,23 +134,36 @@ class CommNetwork(object):
         return self._wires[A, B]
 
     def transfer(self, A, B, V):
-        wire = self[A,B]
+        path = self.path(A,B)
         assert V in A, "Sending machine does not have variable %s"%V
-        wire.transmit(V)
+        for wire in path:
+            wire.transmit(V)
+
+    def path(self, A, B):
+        from theano_infrastructure import GPUWorker # breaking dependencies!!
+        if A==B:        return []
+        try:            return [self[A,B]]
+        except:         pass
+        # no trivial solution - now we deal with routing
+
+        # only a simple algorithm so far to deal with GPUs
+        if isinstance(B, GPUWorker):
+            return [self[A,B.host], self[B.host, B]]
+        if isinstance(A, GPUWorker):
+            return [self[A,A.host], self[A.host, B]]
+
+        raise KeyError("Unable to find path from %s to %s\n"%(str(A), str(B)))
 
     def predict_transfer_time(self, A, B, V, niter=10):
-        if A==B:
-            return 0
-        try:
-            wire = self[A,B]
-        except KeyError:
-            return a_big_number
+        try:                path = self.path(A,B)
+        except KeyError:    return a_big_number
 
         A.instantiate_random_variable(V)
 
         starttime = time.time()
         for i in xrange(niter):
-            wire.transmit(V) # make sure we block here
+            for wire in path:
+                wire.transmit(V) # make sure we block here
 
         endtime = time.time()
 
