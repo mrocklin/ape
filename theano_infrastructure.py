@@ -5,6 +5,7 @@ from theano_computation import (TheanoVariable, TheanoArrayVariable, TheanoJob,
 from infrastructure import Worker, Wire
 import time
 import theano
+import numpy as np
 
 ###########
 # Workers #
@@ -32,19 +33,30 @@ class PUWorker(Worker):
 
     def _compile(self, job, gpu=None, block=False):
         assert gpu is not None
-        name = self.local_name(job)
-        self.rc['job_%s'%name] = job.compiler()
-        self.do('%s = job_%s.function(gpu=%s)'%(name, name, str(gpu)))
-        res = self.do('%s.name = %s.name if hasattr(%s, "name") else %s'%(
-            name, name, name, name))
+        fnname = self.local_name(job)
+        compilername = 'compiler_%s'%fnname
+
+        # Push compilation object (likely a TheanoJob clone)
+        res = self.rc.push({compilername: job.compiler()})
+        res.wait(); assert res.successful()
+
+        # Tell remote to compile the function locally
+        res = self.do('%s = %s.function(gpu=%s)'%
+                (fnname, compilername, str(gpu)))
+        res.wait(); assert res.successful()
+
+        # Sometimes names are lost in the cloning process. Ensure its ok
+        res = self.do('%s.name = %s.name if hasattr(%s, "name") else "%s"'%(
+            fnname, fnname, fnname, fnname))
+        res.wait(); assert res.successful()
         if block:
             res = res.result
         return res
 
     def _run(self, job):
         name = self.local_name
-        outputs = ','.join([name(o) for o in job.outputs])
-        inputs = ','.join([name(i) for i in job.inputs])
+        outputs = ', '.join([name(o) for o in job.outputs])
+        inputs = ', '.join([name(i) for i in job.inputs])
 
         return self.do('%s = %s(%s)'%(outputs, name(job), inputs))
 
@@ -56,8 +68,12 @@ class PUWorker(Worker):
     def info(self):
         return (self.rc, self.__class__)
 
+    def delete(self, var):
+        return self.do('del %s'%self.local_name(var))
+
 class GPUWorker(PUWorker):
     _name_prefix = 'gpu'
+    _name_dict = {}
 
     def __init__(self, host):
         self.host = host
@@ -88,16 +104,13 @@ class GPUWorker(PUWorker):
                       name,                              str(var.shape)))
         return res
 
-    def local_name(self, var):
-        return self.__class__.cls_local_name(var)
-        #return "gpu_"+var.name
-
     @property
     def name(self):
         return self.host.name+"_gpu"
 
 class CPUWorker(PUWorker):
     _name_prefix = 'cpu'
+    _name_dict = {}
 
     def __init__(self, remote):
         self.rc = remote

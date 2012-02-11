@@ -51,7 +51,12 @@ def intermediate_shapes(inputs, outputs, shapes):
                                  shapes(*numeric_inputs)))
     return iinput_shape_dict
 
-def timings(computation, system, **kwargs):
+def compute_runtimes(computation, system, niter=5):
+    """
+    Compute runtimes of a computation on a system
+
+    Returns a dict mapping (job, machine) -> runtime of job on machine
+    """
     jobs = computation.jobs
     machines = system.machines
     N = system.comm
@@ -59,21 +64,48 @@ def timings(computation, system, **kwargs):
     runtimes = {} # Maps job, machine -> runtime
     for machine in machines:
         for job in jobs:
-            runtimes[name(job), machine] = machine.predict_runtime(job, **kwargs)
+            runtimes[name(job), machine] = machine.predict_runtime(job, niter)
 
-    commtimes = defaultdict(lambda : 1e300) # Maps job1,job2,m1,m2 -> comm time
-#    for job in jobs:
-#        for child in job.children:
-#            variables = set(job.outputs).intersection(child.inputs)
-#            for A in machines:
-#                for B in machines:
-#                    total_time = 0
-#                    for V in variables:
-#                        total_time += N.predict_transfer_time(A,B,V, **kwargs)
-#                    commtimes[job,child,A,B] = total_time
+    return runtimes
 
-    # silly timings that don't take into account several variables
-    commtimes2 = defaultdict(lambda : 1e300) # Maps job1,m1,m2 -> comm time
+def compute_commtimes2(computation, system, **kwargs):
+    """
+    Compute communication times - inactive
+
+    Returns Dict mapping (from_job, to_job,worker, worker) to communication time
+    This function takes into accoount some jobs may require an incomplete set
+    of variables from another
+
+    This function is more correct but not what is required for the tompkins
+    algorithm
+    """
+    jobs = computation.jobs
+    machines = system.machines
+    N = system.comm
+
+    commtimes = defaultdict(lambda : 1e10) # Maps job1,job2,m1,m2 -> comm time
+    for job in jobs:
+        for child in job.children:
+            variables = set(job.outputs).intersection(child.inputs)
+            for A in machines:
+                for B in machines:
+                    total_time = 0
+                    for V in variables:
+                        total_time += N.predict_transfer_time(A,B,V, **kwargs)
+                    commtimes[job,child,A,B] = total_time
+    return commtimes
+
+def compute_commtimes(computation, system, **kwargs):
+    """
+    Compute communication times
+
+    Returns Dict mapping (job, worker, worker) to communication time
+    """
+    jobs = computation.jobs
+    machines = system.machines
+    N = system.comm
+
+    commtimes = defaultdict(lambda : 1e10) # Maps job1,job2,m1,m2 -> comm time
     for job in jobs:
         variables = job.outputs
         for A in machines:
@@ -81,9 +113,9 @@ def timings(computation, system, **kwargs):
                 total_time = 0
                 for V in variables:
                     total_time += N.predict_transfer_time(A,B,V, **kwargs)
-                commtimes2[name(job),A,B] = total_time
+                commtimes[name(job),A,B] = total_time
 
-    return runtimes, commtimes, commtimes2
+    return commtimes
 
 def B_machine_ability(computation, system, startmachine=None, endmachine=None):
     if not endmachine:
@@ -125,11 +157,12 @@ def make_ilp(computation, system, startmachine, **kwargs):
     for a,b in PP:
         P[name(a), name(b)] = PP[a,b]
     B = B_machine_ability(computation, system, startmachine)
-    runtimes, _, commtimes = timings(computation, system, **kwargs)
+    runtimes  =  compute_runtimes(computation, system, **kwargs)
+    commtimes = compute_commtimes(computation, system, **kwargs)
     D = runtimes
     C = commtimes
     R = defaultdict(lambda:0)
-    M = 100 # TODO
+    M = 10# 100 # TODO
     prob, X, S, Cmax = schedule(Jobs, Agents, D, C, R, B, P, M)
 
     return prob, X, S, Cmax

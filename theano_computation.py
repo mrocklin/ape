@@ -59,53 +59,51 @@ class TheanoJob(Job):
     def compiler(self):
         return TheanoJob(apply_clone(self._apply))
 
-class StartJob(Job):
+class simplecompiler(object):
+    def __init__(self):
+        pass
+    def function(self, *args, **kwargs):
+        return lambda :0
+
+class StartOrEndJob(Job):
     def __init__(self, var):
-        self._output = var
+        self._var = var
 
     def info(self):
-        return self._output, self.__class__
+        return self._var, self.__class__
+
+    def __str__(self):
+        return self.name
+
+    def function(*args, **kwargs):
+        return lambda : 0
+
+    def compiler(self):
+        return simplecompiler()
+
+class StartJob(StartOrEndJob):
 
     @property
     def name(self):
-        return "Start_%s"%str(self._output)
-
+        return "Start_%s"%str(self._var)
     @property
     def outputs(self):
-        return [self._output]
+        return [self._var]
     @property
     def inputs(self):
         return []
-    def __str__(self):
-        return self.name
-    def compiler(self):
-        def f():
-            return 0
-        return f
 
-class EndJob(Job):
-    def __init__(self, var):
-        self._input = var
-
-    def info(self):
-        return self._input, self.__class__
+class EndJob(StartOrEndJob):
 
     @property
     def name(self):
-        return "End_%s"%str(self._input)
-
+        return "End_%s"%str(self._var)
     @property
     def outputs(self):
         return []
     @property
     def inputs(self):
-        return [self._input]
-    def __str__(self):
-        return self.name
-    def compiler(self):
-        def f():
-            return 0
-        return f
+        return [self._var]
 
 class TheanoVariable(Variable):
     def __init__(self, variable):
@@ -159,7 +157,7 @@ class TheanoArrayVariable(TheanoVariable):
         assert isinstance(self._variable, theano.tensor.TensorVariable)
 
     def get_shape(self):
-        if not self._shape:
+        if self._shape is None:
             raise ValueError("Have not yet specified shape for %s"%(str(self)))
         return self._shape
     def set_shape(self):
@@ -218,8 +216,9 @@ class TheanoComputation(Computation):
         compute_shapes = theano.function(inputs, shape_outputs)
 
         def tuplify_shape(shape):
-            if len(shape)==0:   return (1,)
-            else:               return tuple(shape)
+            #if len(shape)==0:   return (1,)
+            #else:               return tuple(shape)
+            return tuple(shape)
 
         numeric_inputs = [np.ones(shape).astype(np.float32)
                 for shape in inputshapes]
