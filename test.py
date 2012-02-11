@@ -90,6 +90,8 @@ shapes = {key.name:tuplify_shape(value) for key, value in shapes.items()}
 TheanoArrayVariable.known_shapes = shapes
 
 prob, X, S, Cmax = make_ilp(computation, system, A, niter=3)
+prob.solver = pulp.LpSolverDefault
+prob.solver.maxSeconds = 10
 sched = compute_schedule(prob, X, S, Cmax)
 
 
