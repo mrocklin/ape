@@ -1,0 +1,40 @@
+\documentclass[11pt, a4paper, english]{article}
+\usepackage{subfigure}
+\usepackage{amsfonts}
+\usepackage{times}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage[top=1in,right=1in,left=1in,bottom=1.5in]{geometry}
+\usepackage{wrapfig}
+\usepackage{amsmath}
+\usepackage{authblk}
+\usepackage{mdwlist}
+\usepackage{listings}
+\lstset{
+    language=Python,
+%    backgroundcolor=\color{Dandelion}
+}
+%\usepackage[font=small,labelfont=bf]{caption}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\argmin}{\arg\min}
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\comment}[1]{\textit{\color{blue} {#1}}}
+\newcommand{\commentout}[1]{}
+\newcommand{\deriv}[2]{\frac{\partial {#1}}{\partial {#2}}}
+%\newcommand{\vect}[1]{\vec{#1}}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\xx}{\mathbf{x}}
+\newcommand{\x}{\xx}
+%\newcommand{\dx}{\mathbf{\delta x}}
+\newcommand{\dx}{\mathbf{dx}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\needref}{$^\textit{reference needed}$}
+\newcommand{\tab}{\hspace{5mm}}
+\newcommand{\N}[2]{\mathcal{N}\left(#1, #2\right)}
+\newcommand{\vmu}[1]{\vect{\mu}_{#1}}
+\newcommand{\Nms}[1]{\mathcal{N}\left(\mu_{#1}, \sigma_{#1}\right)}
+\newcommand{\NMS}[1]{\mathcal{N}\left(\vmu{#1}, \vect{\Sigma_{#1}}\right)}
+\newcommand{\normal}[2]{\frac{1}{\sqrt{2\pi} #2}e^{- \frac{\left(x - #1\right)^{2}}{2 #2^{2}}}}
+\newcommand{\Normal}[2]{|2\pi#2|^{-\half} e^{\left(X-#1\right)^T #2^{-1} \left(X-#1\right)} }
+\newcommand{\code}[1]{\texttt{#1}}
