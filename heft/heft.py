@@ -55,7 +55,7 @@ class WorkerSchedule(object):
     def insert(self, job, start_time, finish_time):
         i = 0
         for i, (j,st,ft) in enumerate(self.task_list):
-            if start_time>ft:
+            if finish_time<=st:
                 break
         self.task_list.insert(i+1, (job, start_time, finish_time))
         self.assert_schedule()
@@ -64,18 +64,17 @@ class WorkerSchedule(object):
         for (_,_,ft1),(_,st2,_) in zip(self.task_list[:-1], self.task_list[1:]):
             assert ft1<=st2
 
-    def best_timeslot_after(self, job, ready_time, duration):
+    def best_timeslot(self, job, ready_time, duration):
+        if len(self.task_list) == 0:
+            return ready_time, ready_time+duration
         for t1,t2 in zip(self.task_list, self.task_list[1:]+[(0,1e300,0)]):
             _,_,finish1 = t1
             _,start2,_  = t2
-            potential_start  = finish1
-            potential_finish = finish1+duration
-            if potential_finish < start2 and potential_finish > ready_time:
-                return potential_start, potential_finish
-        start = max(ready_time,
-        return start,  start+duration
-        potential_start = ready_time
-        potential_finish = ready_time+duration
+            potential_start = max(ready_time, finish1)
+            if potential_start + duration < start2: # fits?
+                return potential_start, potential_start + duration
+
+        assert False, "Should never reach this point"
 
 
 def finish_time(job, duration, worker_schedule):
@@ -93,13 +92,23 @@ def schedule(jobs, workers, inputs, outputs, runtime, commtime, cache=True):
     priority_list = [(priority(job), job) for job in jobs]
     priority_list.sort(key = lambda (p, j) : -p) # sort by priority, highest 1st
 
+    scheduled_on = dict()
+    finish_time_of = dict()
+
     worker_schedules = map(WorkerSchedule, workers)
 
     # Returns when a job would be scheduled on a worker_schedule
-    def timings(job, worker_schedule):
-        duration = runtime(job, worker_schedule.worker)
-        start, finish = worker_schedule.best_timeslot(job, duration)
-        return start, finish, worker_schedule
+    def timings(job, ws):
+        arrival_times = [0]
+        for parent in job.parents:
+            finish_time = finish_time_of[parent]
+            arrival_times.append(finish_time +
+                    commtime(parent, job, scheduled_on[parent], ws.worker))
+        ready_time = max(arrival_times)
+
+        duration = runtime(job, ws.worker)
+        start, finish = ws.best_timeslot(job, duration, ready_time)
+        return start, finish, ws
 
     # Go through the list of jobs starting with highest priority
     for priority, job in priority_list:
@@ -110,5 +119,7 @@ def schedule(jobs, workers, inputs, outputs, runtime, commtime, cache=True):
         start, finish, ws = start_finish_ws[0]
         # Give this job to that worker
         ws.insert(job, start, finish)
+        scheduled_on[job] = ws.worker
+        finish_time_of[job] = finish
 
     return worker_schedules
