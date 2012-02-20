@@ -78,6 +78,7 @@ class WorkerSchedule(object):
 
 
 def finish_time(job, duration, worker_schedule):
+    assert False
     start, finish = worker_schedule.best_timeslot(job, duration)
     return finish
 
@@ -107,7 +108,7 @@ def schedule(jobs, workers, inputs, outputs, runtime, commtime, cache=True):
         ready_time = max(arrival_times)
 
         duration = runtime(job, ws.worker)
-        start, finish = ws.best_timeslot(job, duration, ready_time)
+        start, finish = ws.best_timeslot(job, ready_time, duration)
         return start, finish, ws
 
     # Go through the list of jobs starting with highest priority
@@ -115,7 +116,7 @@ def schedule(jobs, workers, inputs, outputs, runtime, commtime, cache=True):
         # Compute when this job would finish on each worker
         start_finish_ws = [timings(job, ws) for ws in worker_schedules]
         # Greedily select the best
-        start_finish_ws.sort(key = lambda (s,f,ws) : -f) # sort by earliest fin
+        start_finish_ws.sort(key = lambda (s,f,ws) : f) # sort by earliest fin
         start, finish, ws = start_finish_ws[0]
         # Give this job to that worker
         ws.insert(job, start, finish)
