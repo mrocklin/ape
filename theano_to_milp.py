@@ -2,10 +2,9 @@ from collections import defaultdict
 import theano
 import numpy as np
 import theano.tensor as T
-#from Job import *
 from util import set_union
 from tompkins import schedule
-from pulp import value
+import pulp
 
 
 tdp = theano.printing.debugprint
@@ -24,34 +23,7 @@ def name(x):
 name._names = {}
 name._count = 0
 
-
-def all_applys(outputs):
-    applies = set()
-    variables = list(outputs)
-    for v in variables:
-        if v.owner and v.owner not in applies:
-            applies.add(v.owner)
-            if v.owner.inputs:
-                for input in v.owner.inputs:
-                    if input not in variables:
-                        variables.append(input)
-    return applies
-
-def intermediate_shapes(inputs, outputs, shapes):
-    numeric_inputs = [np.ones(shape).astype(np.float32) for shape in shapes]
-
-    apply_nodes = all_applys(outputs)
-
-    intermediate_inputs = [i for an in apply_nodes for i in an.inputs]
-
-    shapes = theano.function(inputs,
-            [var.shape for var in intermediate_inputs+outputs])
-
-    iinput_shape_dict = dict(zip(intermediate_inputs+outputs,
-                                 shapes(*numeric_inputs)))
-    return iinput_shape_dict
-
-def compute_runtimes(computation, system, niter=5):
+def compute_runtimes(computation, system, niter=3):
     """
     Compute runtimes of a computation on a system
 
@@ -146,7 +118,7 @@ def B_machine_ability(computation, system, startmachine=None, endmachine=None):
     return B
 
 value = lambda z:z.value()
-def make_ilp(computation, system, startmachine, **kwargs):
+def make_ilp(computation, system, startmachine, M=10, **kwargs):
     machines = system.machines
     network = system.comm
 
@@ -162,10 +134,12 @@ def make_ilp(computation, system, startmachine, **kwargs):
     D = runtimes
     C = commtimes
     R = defaultdict(lambda:0)
-    M = 10# 100 # TODO
     prob, X, S, Cmax = schedule(Jobs, Agents, D, C, R, B, P, M)
 
-    return prob, X, S, Cmax
+    prob.solver = pulp.LpSolverDefault
+    prob.solver.maxSeconds = M
+
+    return prob, X, S, Cmax, runtimes, commtimes
 
 def compute_schedule(prob, X, S, Cmax):
     prob.solve()

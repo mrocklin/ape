@@ -37,7 +37,7 @@ class Worker(Node):
         for var in job.outputs:
             assert var in self, "Output variable not produced"
 
-    def predict_runtime(self, job, niter=10):
+    def predict_runtime(self, job, niter=3):
         for var in job.inputs:
         #    if not var in self:
             self.instantiate_random_variable(var)
@@ -154,7 +154,7 @@ class CommNetwork(object):
 
         raise KeyError("Unable to find path from %s to %s\n"%(str(A), str(B)))
 
-    def predict_transfer_time(self, A, B, V, niter=10):
+    def predict_transfer_time(self, A, B, V, niter=3):
         try:                path = self.path(A,B)
         except KeyError:    return a_big_number
 
@@ -169,7 +169,7 @@ class CommNetwork(object):
 
         return (endtime - starttime) / niter
 
-class ComputationalNetwork(object):
+class ComputationalSystem(object):
     def __init__(self, machines, comm):
         self.machines = machines
         self.comm = comm
