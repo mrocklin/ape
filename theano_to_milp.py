@@ -139,7 +139,7 @@ def make_ilp(computation, system, startmachine, M=10, **kwargs):
     prob.solver = pulp.LpSolverDefault
     prob.solver.maxSeconds = M
 
-    return prob, X, S, Cmax, runtimes, commtimes
+    return prob, X, S, Cmax#, runtimes, commtimes
 
 def compute_schedule(prob, X, S, Cmax):
     prob.solve()
@@ -152,5 +152,7 @@ def compute_schedule(prob, X, S, Cmax):
     sched.sort(key=lambda x:x[1])
     return sched
 
-
+def go_schedule(computation, system, startmachine, **kwargs):
+    prob, X, S, Cmax = make_ilp(computation, system, startmachine, **kwargs)
+    return compute_schedule(prob, X, S, Cmax)
 

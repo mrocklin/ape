@@ -5,11 +5,13 @@ def theano_heft_schedule(computation, system, startmachine, **kwargs):
     machines = system.machines
     network = system.comm
 
-    jobs = map(name, computation.jobs)
+    # jobs = map(name, computation.jobs)
+    jobs = computation.jobs
     workers = machines
 
     def runtime(job, worker):
-        if job in computation.start_jobs and worker!=startmachine:
+        terminal_jobs = computation.start_jobs + computation.end_jobs
+        if job in terminal_jobs and worker!=startmachine:
             return big_number
         return worker.predict_runtime(job)
 
@@ -19,7 +21,7 @@ def theano_heft_schedule(computation, system, startmachine, **kwargs):
         total_time = 0
         for v in variables:
             total_time += network.predict_transfer_time(
-                    worker1, worker2, V, **kwargs)
+                    worker1, worker2, v, **kwargs)
 
         return total_time
 
