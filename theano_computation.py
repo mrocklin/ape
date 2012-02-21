@@ -171,10 +171,21 @@ class TheanoArrayVariable(TheanoVariable):
     def dtype(self):
         return self._variable.dtype
 
+def give_names_to_function(f):
+    for var in f.maker.env.variables:
+        if not var.name:
+            var.name = "unnamed_var_%d"%give_names_to_function.count
+            give_names_to_function.count+=1
+    return f
+give_names_to_function.count = 0
+
+
 class TheanoComputation(Computation):
     def __init__(self, f, shapes):
         self.f = f
+        give_names_to_function(f)
         self.known_shapes = self.compute_known_shapes(shapes)
+
 
     def type_check(self):
         assert isinstance(self.f, theano.function)
