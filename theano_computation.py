@@ -6,23 +6,25 @@ from theano_util import intermediate_shapes
 job_names = {}
 
 class TheanoJob(Job):
-    def __init__(self, apply):
+    def __init__(self, apply, computation):
         assert isinstance(apply, theano.Apply)
         self._apply = apply
+        self.c = computation
 
     def type_check(self):
         super(TheanoJob, self).type_check()
         assert all(isinstance(var, TheanoVariable) for var in self.inputs)
         assert all(isinstance(var, TheanoVariable) for var in self.outputs)
         assert isinstance(self.op, theano.Op)
+        assert isinstance(self.c, TheanoComputation)
 
     @property
     def inputs(self):
-        return [TheanoArrayVariable(var) for var in self._apply.inputs
+        return [TheanoArrayVariable(var, self.c) for var in self._apply.inputs
                 if not isinstance(var, theano.Constant)]
     @property
     def outputs(self):
-        return [TheanoArrayVariable(var) for var in self._apply.outputs]
+        return [TheanoArrayVariable(var, self.c) for var in self._apply.outputs]
     @property
     def op(self):
         return self._apply.op
@@ -57,7 +59,7 @@ class TheanoJob(Job):
         return theano.function(inputs, output, mode=mode, name='test')
 
     def compiler(self):
-        return TheanoJob(apply_clone(self._apply))
+        return TheanoJob(apply_clone(self._apply), None)
 
 class simplecompiler(object):
     def __init__(self):
@@ -106,12 +108,14 @@ class EndJob(StartOrEndJob):
         return [self._var]
 
 class TheanoVariable(Variable):
-    def __init__(self, variable):
+    def __init__(self, variable, computation):
         self._variable = variable
+        self.c = computation
 
     def type_check(self):
         super(TheanoVariable, self).type_check()
         assert isinstance(self._variable, theano.Variable)
+        assert isinstance(self.c, TheanoComputation)
 
     def info(self):
         return self._variable
@@ -125,7 +129,7 @@ class TheanoVariable(Variable):
     def from_job(self):
         if not self._variable.owner:
             return StartJob(self)
-        return TheanoJob(self._variable.owner)
+        return TheanoJob(self._variable.owner, self.c)
     @property
     def to_jobs(self):
         if all(isinstance(apply, str) for apply, idx in self._variable.clients):
@@ -133,7 +137,8 @@ class TheanoVariable(Variable):
         assert not any(isinstance(apply, str)
                 for apply, idx in self._variable.clients)
 
-        return [TheanoJob(client) for client, index in self._variable.clients]
+        return [TheanoJob(client, self.c)
+                for client, index in self._variable.clients]
 
     @property
     def shape(self):
@@ -144,13 +149,11 @@ class TheanoVariable(Variable):
         return self._variable
 
 class TheanoArrayVariable(TheanoVariable):
-    known_shapes = {}
-
-    def __init__(self, variable, shape=None):
+    def __init__(self, variable, computation):
         self._variable = variable
-        self._shape = shape
-        if not shape and variable.name in TheanoArrayVariable.known_shapes:
-            self._shape = TheanoArrayVariable.known_shapes[variable.name]
+        try:        self._shape = computation.known_shapes[variable.name]
+        except:     self._shape = None
+        self.c = computation
 
     def type_check(self):
         super(TheanoArrayVariable, self).type_check()
@@ -174,8 +177,8 @@ class TheanoComputation(Computation):
         self.known_shapes = self.compute_known_shapes(shapes)
 
     def type_check(self):
-        assert isinstance(f, theano.function)
-        assert isinstance(shapes, dict)
+        assert isinstance(self.f, theano.function)
+        assert isinstance(self.known_shapes, dict)
 
     @property
     def env(self):
@@ -183,11 +186,11 @@ class TheanoComputation(Computation):
 
     @property
     def inputs(self):
-        return [TheanoArrayVariable(var, self.known_shapes[var.name])
+        return [TheanoArrayVariable(var, self)
                 for var in self.env.inputs]
     @property
     def outputs(self):
-        return [TheanoArrayVariable(var, self.known_shapes[var.name])
+        return [TheanoArrayVariable(var, self)
                 for var in self.env.outputs]
 
     @property
@@ -198,6 +201,23 @@ class TheanoComputation(Computation):
         return map(EndJob, self.outputs)
 
     def compute_known_shapes(self, inputshapes):
+        symbolic_shapes = self.f.maker.env.shape_feature.shape_of
+        numeric_shapes = {}
+        inputs = self.f.maker.env.inputs
+
+        # convert all symbolic input shapes to numeric equivalents
+        sym_to_num = {}
+        for input, num_shape in zip(inputs, inputshapes):
+            sym_shape = symbolic_shapes[input]
+            for sym, num in zip(sym_shape, num_shape):
+                sym_to_num[sym] = num
+
+        for var, sym_shape in symbolic_shapes.items():
+            num_shape = tuple([sym_to_num[sym] for sym in sym_shape])
+            numeric_shapes[var.name] = num_shape
+
+        return numeric_shapes
+
         variables = set()
         def get_variables(v):
             if v in variables:
