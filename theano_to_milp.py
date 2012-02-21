@@ -156,3 +156,46 @@ def go_schedule(computation, system, startmachine, **kwargs):
     prob, X, S, Cmax = make_ilp(computation, system, startmachine, **kwargs)
     return compute_schedule(prob, X, S, Cmax)
 
+class FakeDict(object):
+    def __init__(self, f):
+        self._f = f
+    def __getitem__(self, key):
+        return self._f(*key)
+
+maclab = {"ankaa", "mimosa", "bellatrix"}
+maclab = {name+".cs.uchicago.edu" for name in maclab}
+def machine_type_id(w):
+    name = w.get_hostname()
+    if name in maclab:
+        name = "maclab"
+    if isinstance(w, GPUWorker):
+        name += "_gpu"
+    return name
+
+def make_runtime_fakedict(fn):
+    cache = dict()
+    def runtime(job, agent):
+        key = (job, machine_type_id(agent))
+        if key in cache:
+            value = cache[key]
+        else:
+            value = fn(job, agent)
+            cache[key] = value
+        return value
+    runtime_dict = FakeDict(runtime)
+    return runtime_dict
+def make_commtime_fakedict(fn):
+    def commtime(job, a1, a2):
+        if a1==a2:
+            return 0
+        key = (job, machine_type_id(a1), machine_type_id(a2))
+        if key in cache:
+            value = cache[key]
+        else:
+            value = fn(job, agent, agent)
+            cache[key] = value
+        return value
+    commtime_dict = FakeDict(commtime)
+    return commtime_dict
+
+

@@ -1,5 +1,5 @@
 from graph import Node
-from util import is_ordered_iterator
+from util import is_ordered_iterator, host_name
 from theano_computation import (TheanoVariable, TheanoArrayVariable, TheanoJob,
         Variable, Job)
 from infrastructure import Worker, Wire
@@ -70,6 +70,9 @@ class PUWorker(Worker):
 
     def delete(self, var):
         return self.do('del %s'%self.local_name(var))
+
+    def get_hostname(self):
+        return self.rc.apply_sync(host_name)
 
 class GPUWorker(PUWorker):
     _name_prefix = 'gpu'
