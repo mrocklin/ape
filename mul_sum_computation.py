@@ -23,7 +23,7 @@ def make_computation(n, input_shape):
     f = theano.function(xs, w, mode=cpu_mode)
     shapes = f.maker.env.shape_feature.shape_of
 
-    shapes = intermediate_shapes(xs, [w], [(3000,3000)]*n)
-    computation = TheanoComputation(f, [(3000,3000)]*n)
+    shapes = intermediate_shapes(xs, [w], [input_shape]*n)
+    computation = TheanoComputation(f, [input_shape]*n)
 
     return computation

@@ -1,4 +1,5 @@
 from heft import schedule
+from timings import make_runtime_fn, make_commtime_fn
 
 big_number = 1e9
 def theano_heft_schedule(computation, system, startmachine, **kwargs):

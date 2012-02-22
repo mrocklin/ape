@@ -61,6 +61,24 @@ class TheanoJob(Job):
     def compiler(self):
         return TheanoJob(apply_clone(self._apply), None)
 
+    def __str__(self):
+        return str(self.op)+suffix(self)
+
+def suffix(x):
+    """
+    Many different jobs will have the same op and thus the same name. Lets add
+    suffixes to get rid of this problem
+    """
+    if x in suffix._cache:
+        return suffix._cache[x]
+    s = '_%d'%(suffix._count)
+    suffix._count += 1
+    suffix._cache[x] = s
+    return s
+suffix._cache = dict()
+suffix._count = 0
+name = lambda x:x
+
 class simplecompiler(object):
     def __init__(self):
         pass
