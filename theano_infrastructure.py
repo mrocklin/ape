@@ -101,11 +101,15 @@ class GPUWorker(PUWorker):
         return res
 
     def instantiate_empty_variable(self, var):
+        res = self.do(self.instantiate_empty_variable_code(var))
+        return res
+
+    def instantiate_empty_variable_code(self, var):
         assert var.dtype in (np.float32, 'float32')
         name = self.local_name(var)
-        res = self.do('%s = theano.sandbox.cuda.CudaNdarray.zeros(%s)'%(
-                      name,                              str(var.shape)))
-        return res
+        code = '%s = theano.sandbox.cuda.CudaNdarray.zeros(%s);'%(
+                name, str(var.shape))
+        return code
 
     @property
     def name(self):
@@ -146,10 +150,13 @@ class CPUWorker(PUWorker):
 
     def instantiate_empty_variable(self, var):
         assert hasattr(var, 'shape') and hasattr(var, 'dtype')
-        name = self.local_name(var)
+        return self.do(self.instantiate_empty_variable_code(var)).result
 
-        return self.do('%s = np.empty(%s, dtype="%s")'%(
-            name, str(var.shape), str(var.dtype))).result
+    def instantiate_empty_variable_code(self, var):
+        name = self.local_name(var)
+        code = '%s = np.empty(%s, dtype="%s");'%(
+                name, str(var.shape), str(var.dtype))
+        return code
 
 def importall(view):
     view.execute('import numpy as np')
@@ -208,13 +215,30 @@ class MPIWire(CPUWireCPU):
 
     def transmit(self, var):
         assert var in self.A
-        self.B.instantiate_empty_variable(var)
-        a = self.B.do('MPI.COMM_WORLD.Recv(%s, source=%d, tag=13)'%(
-                self.B.local_name(var), self.a_rank))
-        b = self.A.do('MPI.COMM_WORLD.Send(%s, dest=%d, tag=13)'%(
-                self.A.local_name(var), self.b_rank))
+        acode, bcode = self.transmit_code(var)
+        a = self.A.do(acode)
+        b = self.B.do(bcode)
+
+        #self.B.instantiate_empty_variable(var)
+        #a = self.B.do('MPI.COMM_WORLD.Recv(%s, source=%d, tag=13)'%(
+        #        self.B.local_name(var), self.a_rank))
+        #b = self.A.do('MPI.COMM_WORLD.Send(%s, dest=%d, tag=13)'%(
+        #        self.A.local_name(var), self.b_rank))
 
         return a,b
+
+    def transmit_code(self, var, tag=None):
+        if not tag:
+            tag = hash(var) % 2**16
+        # code for A
+        acode = 'MPI.COMM_WORLD.Send(%s, dest=%d, tag=%d);'%(
+                     self.A.local_name(var), self.b_rank, tag)
+
+        bcode = self.B.instantiate_empty_variable_code(var)
+
+        bcode += 'MPI.COMM_WORLD.Recv(%s, source=%d, tag=%d);'%(
+                     self.B.local_name(var), self.a_rank, tag)
+        return acode, bcode
 
 class ZMQWire(CPUWireCPU):
     def __init__(self, A, B):

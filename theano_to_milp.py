@@ -99,10 +99,12 @@ def B_machine_ability(computation, system, startmachine=None, endmachine=None):
     B = {}
     for job in computation.jobs:
         for machine in system.machines:
-            if machine.can_compute(job):
-                B[name(job), machine] = 1
-            else:
-                B[name(job), machine] = 0
+            # the zero case never occurs (for now) and this slows us down
+            #if machine.can_compute(job):
+            #    B[name(job), machine] = 1
+            #else:
+            #    B[name(job), machine] = 0
+            B[name(job), machine] = 1
     if startmachine:
         for job in computation.start_jobs:
             for machine in system.machines:

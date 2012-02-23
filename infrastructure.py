@@ -137,6 +137,9 @@ class CommNetwork(object):
         return self._wires[A, B]
 
     def transfer(self, A, B, V):
+        """
+        Send a Variable from Worker A to Worker B
+        """
         path = self.path(A,B)
         assert V in A, "Sending machine does not have variable %s"%V
         for wire in path:
