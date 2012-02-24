@@ -146,6 +146,15 @@ class CommNetwork(object):
             wire.transmit(V)
 
     def transfer_code(self, A, B, V):
+        """
+        Produces code to execute a transfer of variable V from A to B
+
+        returns a dict mapping machines to code they should run
+
+        See Also
+        --------
+        receive_code
+        """
         path = self.path(A,B)
         assert len(path)<=1, "Not currently set up for asynchronous routing,  need to set up blocking calls"
         code = {}
@@ -155,6 +164,23 @@ class CommNetwork(object):
             if wire.B not in code: code[wire.B] = []
             code[wire.A] = acode
             code[wire.B] = bcode
+        return code
+    def receive_wait_code(self, A, B, V):
+        """
+        Produces code to wait for completion of variable transfer V from A to B
+
+        returns a dict mapping machines to code they should run
+
+        See Also
+        --------
+        transfer_code
+        """
+        path = self.path(A,B)
+        assert len(path)<=1, "Not currently set up for asynchronous routing,  need to set up blocking calls"
+        code = {}
+        for wire in path:
+            sendacode, recvbcode = wire.waiting_code(V)
+            code[wire.B] = recvbcode
         return code
 
     def path(self, A, B):

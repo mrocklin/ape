@@ -59,6 +59,8 @@ class PUWorker(Worker):
         return res
 
     def _run_code(self, job):
+        if not job.outputs: return ''
+
         name = self.local_name
         outputs = ', '.join([name(o) for o in job.outputs])
         inputs = ', '.join([name(i) for i in job.inputs])
@@ -225,26 +227,32 @@ class MPIWire(CPUWireCPU):
         a = self.A.do(acode)
         b = self.B.do(bcode)
 
-        #self.B.instantiate_empty_variable(var)
-        #a = self.B.do('MPI.COMM_WORLD.Recv(%s, source=%d, tag=13)'%(
-        #        self.B.local_name(var), self.a_rank))
-        #b = self.A.do('MPI.COMM_WORLD.Send(%s, dest=%d, tag=13)'%(
-        #        self.A.local_name(var), self.b_rank))
-
         return a,b
 
     def transmit_code(self, var, tag=None):
         if not tag:
             tag = hash(var) % 2**16
         # code for A
-        acode = 'MPI.COMM_WORLD.Send(%s, dest=%d, tag=%d);'%(
-                     self.A.local_name(var), self.b_rank, tag)
+        varname = self.A.local_name(var)
+        acode = 'mpi_send_%s = MPI.COMM_WORLD.Send(%s, dest=%d, tag=%d);'%(
+                     varname, varname, self.b_rank, tag)
 
         bcode = self.B.instantiate_empty_variable_code(var)
 
-        bcode += 'MPI.COMM_WORLD.Recv(%s, source=%d, tag=%d);'%(
-                     self.B.local_name(var), self.a_rank, tag)
+        varname = self.B.local_name(var)
+        bcode += 'mpi_recv_%s = MPI.COMM_WORLD.Recv(%s, source=%d, tag=%d);'%(
+                     varname, varname, self.a_rank, tag)
         return acode, bcode
+
+    def waiting_code(self, var, tag=None):
+        if not tag:
+            tag = hash(var) % 2**16
+        # code for A
+        acode = 'mpi_send_%s.wait()'%self.A.local_name(var)
+        bcode = 'mpi_recv_%s.wait()'%self.B.local_name(var)
+
+        return acode, bcode
+
 
 class ZMQWire(CPUWireCPU):
     def __init__(self, A, B):
