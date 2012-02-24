@@ -7,6 +7,11 @@ import time
 import theano
 import numpy as np
 
+imports = [ 'import numpy as np',
+            'from theano_computation import *',
+            'from theano_infrastructure import togpu_data, tocpu_data',
+            'import theano',
+            'from mpi4py import MPI']
 ###########
 # Workers #
 ###########
@@ -53,12 +58,14 @@ class PUWorker(Worker):
             res = res.result
         return res
 
-    def _run(self, job):
+    def _run_code(self, job):
         name = self.local_name
         outputs = ', '.join([name(o) for o in job.outputs])
         inputs = ', '.join([name(i) for i in job.inputs])
 
-        return self.do('%s = %s(%s)'%(outputs, name(job), inputs))
+        return '%s = %s(%s)'%(outputs, name(job), inputs)
+    def _run(self, job):
+        return self.do(self._run_code(job))
 
     def __getitem__(self, key):
         if isinstance(key, (Variable, Job)):
@@ -69,7 +76,9 @@ class PUWorker(Worker):
         return (self.rc, self.__class__)
 
     def delete(self, var):
-        return self.do('del %s'%self.local_name(var))
+        return self.do(self.delete_code(var))
+    def delete_code(self, var):
+        return 'del %s'%self.local_name(var)
 
     def get_hostname(self):
         return self.rc.apply_sync(host_name)
@@ -159,11 +168,8 @@ class CPUWorker(PUWorker):
         return code
 
 def importall(view):
-    view.execute('import numpy as np')
-    view.execute('from theano_computation import *')
-    view.execute('from theano_infrastructure import togpu_data, tocpu_data')
-    view.execute('import theano')
-    view.execute('from mpi4py import MPI')
+    for import_line in imports:
+        view.execute(import_line)
 
 def has_gpu(remote):
     def device():

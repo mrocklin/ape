@@ -29,5 +29,5 @@ sched_milp = tompkins_schedule(computation, system, A, M=1,
         runtime=runtime, commtime=commtime_tompkins)
 
 
-#print sched_milp
-print [(x.worker, x.task_list) for x in sched_heft]
+print "Tompkins\n", sched_milp
+print "\nHEFT\n", [(x.worker, x.task_list) for x in sched_heft]
