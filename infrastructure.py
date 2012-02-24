@@ -153,8 +153,8 @@ class CommNetwork(object):
             acode, bcode = wire.transmit_code(V)
             if wire.A not in code: code[wire.A] = []
             if wire.B not in code: code[wire.B] = []
-            code[wire.A].append(acode)
-            code[wire.B].append(bcode)
+            code[wire.A] = acode
+            code[wire.B] = bcode
         return code
 
     def path(self, A, B):
