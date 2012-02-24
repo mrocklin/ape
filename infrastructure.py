@@ -145,6 +145,18 @@ class CommNetwork(object):
         for wire in path:
             wire.transmit(V)
 
+    def transfer_code(self, A, B, V):
+        path = self.path(A,B)
+        assert len(path)<=1, "Not currently set up for asynchronous routing,  need to set up blocking calls"
+        code = {}
+        for wire in path:
+            acode, bcode = wire.transmit_code(V)
+            if wire.A not in code: code[wire.A] = []
+            if wire.B not in code: code[wire.B] = []
+            code[wire.A].append(acode)
+            code[wire.B].append(bcode)
+        return code
+
     def path(self, A, B):
         from theano_infrastructure import GPUWorker # breaking dependencies!!
         if A==B:        return []
@@ -158,7 +170,7 @@ class CommNetwork(object):
         if isinstance(A, GPUWorker):
             return [self[A,A.host], self[A.host, B]]
 
-        raise KeyError("Unable to find path from %s to %s\n"%(str(A), str(B)))
+        raise KeyError("Unable to find path from %s to %s"%(str(A), str(B)))
 
     def predict_transfer_time(self, A, B, V, niter=3):
         try:                path = self.path(A,B)
