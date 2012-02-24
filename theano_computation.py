@@ -222,9 +222,9 @@ class TheanoComputation(Computation):
         return [TheanoArrayVariable(var, self)
                 for var in self.env.outputs]
 
-    @property
-    def jobs(self):
-        return set(TheanoJob(node, self) for node in self.env.nodes)
+    #@property
+    #def jobs(self):
+    #    return set(TheanoJob(node, self) for node in self.env.nodes)
 
     @property
     def varibles(self):
