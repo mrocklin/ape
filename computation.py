@@ -1,6 +1,7 @@
 import itertools
 from collections import defaultdict
 from graph import Node
+from util import is_ordered_iterator
 
 class Job(Node):
     node_color='red'
@@ -142,4 +143,50 @@ class Computation(object):
         for job in self.start_jobs:
                 add_precedence_info(job)
         return P
+
+class simplecompiler(object):
+    def __init__(self):
+        pass
+    def function(self, *args, **kwargs):
+        return lambda :0
+
+class StartOrEndJob(Job):
+    def __init__(self, var):
+        self._var = var
+
+    def info(self):
+        return self._var, self.__class__
+
+    def __str__(self):
+        return self.name
+
+    def function(*args, **kwargs):
+        return lambda : 0
+
+    def compiler(self):
+        return simplecompiler()
+
+class StartJob(StartOrEndJob):
+
+    @property
+    def name(self):
+        return "Start_%s"%str(self._var)
+    @property
+    def outputs(self):
+        return [self._var]
+    @property
+    def inputs(self):
+        return []
+
+class EndJob(StartOrEndJob):
+
+    @property
+    def name(self):
+        return "End_%s"%str(self._var)
+    @property
+    def outputs(self):
+        return []
+    @property
+    def inputs(self):
+        return [self._var]
 

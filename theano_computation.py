@@ -1,4 +1,4 @@
-from computation import Job, Variable, Node, Computation
+from computation import Job, Variable, Node, Computation, StartJob, EndJob
 import theano
 import numpy as np
 from theano_util import intermediate_shapes
@@ -78,52 +78,6 @@ def suffix(x):
 suffix._cache = dict()
 suffix._count = 0
 name = lambda x:x
-
-class simplecompiler(object):
-    def __init__(self):
-        pass
-    def function(self, *args, **kwargs):
-        return lambda :0
-
-class StartOrEndJob(Job):
-    def __init__(self, var):
-        self._var = var
-
-    def info(self):
-        return self._var, self.__class__
-
-    def __str__(self):
-        return self.name
-
-    def function(*args, **kwargs):
-        return lambda : 0
-
-    def compiler(self):
-        return simplecompiler()
-
-class StartJob(StartOrEndJob):
-
-    @property
-    def name(self):
-        return "Start_%s"%str(self._var)
-    @property
-    def outputs(self):
-        return [self._var]
-    @property
-    def inputs(self):
-        return []
-
-class EndJob(StartOrEndJob):
-
-    @property
-    def name(self):
-        return "End_%s"%str(self._var)
-    @property
-    def outputs(self):
-        return []
-    @property
-    def inputs(self):
-        return [self._var]
 
 class TheanoVariable(Variable):
     def __init__(self, variable, computation):

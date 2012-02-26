@@ -234,13 +234,13 @@ class MPIWire(CPUWireCPU):
             tag = hash(var) % 2**16
         # code for A
         varname = self.A.local_name(var)
-        acode = 'mpi_send_%s = MPI.COMM_WORLD.Send(%s, dest=%d, tag=%d);'%(
+        acode = 'mpi_send_%s = MPI.COMM_WORLD.Isend(%s, dest=%d, tag=%d);'%(
                      varname, varname, self.b_rank, tag)
 
         bcode = self.B.instantiate_empty_variable_code(var)
 
         varname = self.B.local_name(var)
-        bcode += 'mpi_recv_%s = MPI.COMM_WORLD.Recv(%s, source=%d, tag=%d);'%(
+        bcode += 'mpi_recv_%s = MPI.COMM_WORLD.Irecv(%s, source=%d, tag=%d);'%(
                      varname, varname, self.a_rank, tag)
         return acode, bcode
 

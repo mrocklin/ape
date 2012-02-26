@@ -1,3 +1,5 @@
+from computation import StartJob
+
 class Schedule(object):
 
     def jobs_in_order(self):
@@ -17,7 +19,8 @@ class Schedule(object):
                             all_code[m].append(code)
 
             # Run this job
-            all_code[machine].append(machine._run_code(job))
+            if not isinstance(job, StartJob):
+                all_code[machine].append(machine._run_code(job))
 
             # Send variables to all relevant child jobs
             for to_job in job.children:
@@ -30,6 +33,13 @@ class Schedule(object):
                             all_code[m].append(code)
 
         return all_code
+
+    def local_compile(self):
+        for machine in self.system.machines:
+            for job in self.jobs_on[machine]:
+                if isinstance(job, StartJob): continue
+                else: result = machine.compile(job)
+                assert result.result is None
 
 class HEFTSchedule(Schedule):
     def __init__(self, computation, system, sched):
