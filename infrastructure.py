@@ -104,6 +104,8 @@ class Worker(Node):
     def instantiate_empty_variable(self, var):
         raise NotImplementedError()
 
+    def execute_code(self, code):
+        raise NotImplementedError()
 
 class Wire(Node):
     def __init__(self, A, B):
