@@ -6,6 +6,11 @@ from infrastructure import Worker, Wire
 import time
 import theano
 import numpy as np
+from mpi4py import MPI
+mpi_typename = {np.float32:'MPI.REAL4', np.float64:'MPI.REAL8',
+        'float32':'MPI.REAL4', 'float64':'MPI.REAL8', 'float':'MPI.REAL',
+        np.int32:'MPI.INTEGER4', np.int64:'MPI.INTEGER8'}
+
 
 imports = [ 'import numpy as np',
             'from theano_computation import *',
@@ -232,16 +237,15 @@ class MPIWire(CPUWireCPU):
     def transmit_code(self, var, tag=None):
         if not tag:
             tag = hash(var) % 2**16
+        typename = mpi_typename[var.dtype]
         # code for A
         varname = self.A.local_name(var)
-        acode = 'mpi_send_%s = MPI.COMM_WORLD.Isend(%s, dest=%d, tag=%d);'%(
-                     varname, varname, self.b_rank, tag)
+        acode = 'mpi_send_%s = MPI.COMM_WORLD.Isend([%s, %s], dest=%d, tag=%d);'%(varname, varname, typename, self.b_rank, tag)
 
         bcode = self.B.instantiate_empty_variable_code(var)
 
         varname = self.B.local_name(var)
-        bcode += 'mpi_recv_%s = MPI.COMM_WORLD.Irecv(%s, source=%d, tag=%d);'%(
-                     varname, varname, self.a_rank, tag)
+        bcode += 'mpi_recv_%s = MPI.COMM_WORLD.Irecv([%s, %s], source=%d, tag=%d);'%(varname, varname, typename, self.a_rank, tag)
         return acode, bcode
 
     def waiting_code(self, var, tag=None):
