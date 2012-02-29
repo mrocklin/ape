@@ -6,17 +6,17 @@ from infrastructure import CommNetwork, ComputationalSystem
 rc = Client(profile = 'mpi')
 view = rc[:]
 importall(view)
-a,b,c = rc[0], rc[1], rc[2]
-A,B,C = map(CPUWorker, (a,b,c))
-machines = [A,B,C]
+rcs = [rc[ident] for ident in rc.ids]
+machines = map(CPUWorker, rcs)
+A = machines[0]
 try: # add a gpu if we can
-    G = GPUWorker(C)
+    G = GPUWorker(A)
     machines.append(G)
 except:  pass
 
 # Set up communication network
-wires = [MPIWire(a,b) for a in [A,B,C] for b in [A,B,C] if a!=b]
-try:    wires += [CPUWireGPU(C,G), GPUWireCPU(G,C)]
+wires = [MPIWire(a,b) for a in machines for b in machines if a!=b]
+try:    wires += [CPUWireGPU(A,G), GPUWireCPU(G,A)]
 except: pass
 network = CommNetwork(wires)
 

@@ -12,3 +12,24 @@ def test_single_wire():
 
     assert all(output in B for output in job.outputs)
 
+def test_computation_local(schedule):
+    import numpy as np
+    from mpi4py import MPI
+    d = locals()
+
+    jobs = schedule.system.jobs
+    inputs = schedule.computation.inputs
+
+    # Compile functions locally
+    for job in jobs:
+        fn = job.function(gpu=False)
+        d[A.local_name(job)] = fn
+
+    # Push inputs into namespace
+    for var in computation.inputs:
+        d[A.local_name(var)] = np.ones(var.shape).astype(var.dtype)
+
+
+
+
+

@@ -90,6 +90,9 @@ class PUWorker(Worker):
     def get_hostname(self):
         return self.rc.apply_sync(host_name)
 
+    def execute_code(self, code):
+        return self.rc.execute(code)
+
 class GPUWorker(PUWorker):
     _name_prefix = 'gpu'
     _name_dict = {}

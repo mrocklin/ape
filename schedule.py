@@ -41,6 +41,13 @@ class Schedule(object):
                 else: result = machine.compile(job)
                 assert result.result is None
 
+    def execute(self):
+        machines = self.system.machines
+        code = self.code()
+        results = [machine.execute_code('\n'.join(code[machine]))
+                     for machine in machines]
+        return results
+
 class HEFTSchedule(Schedule):
     def __init__(self, computation, system, sched):
         runs_on = dict()
