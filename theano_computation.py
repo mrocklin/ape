@@ -197,14 +197,22 @@ class TheanoComputation(Computation):
         inputs = self.f.maker.env.inputs
 
         # convert all symbolic input shapes to numeric equivalents
-        sym_to_num = {}
+        sym_to_num_dict = {}
         for input, num_shape in zip(inputs, inputshapes):
             sym_shape = symbolic_shapes[input]
             for sym, num in zip(sym_shape, num_shape):
-                sym_to_num[sym] = num
+                sym_to_num_dict[sym] = num
+
+        def sym_to_num(sym):
+            """ sym to num dict doesn't hold theano constants - add a case """
+            if sym in sym_to_num_dict:
+                return sym_to_num_dict[sym]
+            if isinstance(sym, theano.Constant):
+                return sym.value
 
         for var, sym_shape in symbolic_shapes.items():
-            num_shape = tuple([sym_to_num[sym] for sym in sym_shape])
+            if isinstance(var, theano.Constant): continue
+            num_shape = tuple([sym_to_num(sym) for sym in sym_shape])
             numeric_shapes[var.name] = num_shape
 
         return numeric_shapes

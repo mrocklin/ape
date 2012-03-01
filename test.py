@@ -6,13 +6,13 @@ mpiexec --np 3 ipengine --profile=mpi # in another terminal
 python test.py # in a third terminal
 """
 
-from theano_to_milp import make_ilp
 from theano_to_milp import go_schedule as tompkins_schedule
 #from heft import theano_heft_schedule as heft_schedule
 from heft import schedule as heft_schedule
 from timings import make_runtime_fn, make_commtime_fn, make_commtime_fn_tompkins
 
-from mul_sum_computation import make_computation
+#from mul_sum_computation import make_computation
+from add_sum_computation import make_computation
 from three_node_system import system, A
 
 computation = make_computation(2, (10, 10))
