@@ -2,8 +2,7 @@
 def test_mpi_send():
     import os
     # Run this file with two processors
-    assert os.popen('mpiexec -np 2 python test_mpi_env_send.py').read() == \
-            "True"
+    assert os.popen('mpiexec -np 2 python /home/mrocklin/workspace/ape/ape/test/test_mpi_env_send.py').read() == "True"
 
 # If we're being run by someone (hopefully mpiexec)
 if __name__ == '__main__':

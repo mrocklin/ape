@@ -50,3 +50,34 @@ def unpack(s):
     ins, outs = cPickle.loads(s)
     env = theano.Env(ins, outs)
     return env
+
+def shape_of_variables(env, input_shapes):
+    """
+
+    Inputs:
+        env - the theano.Env in question
+        input_shapes - a dict mapping input to shape
+
+    Outputs:
+        shapes - a dict mapping variable to shape
+
+    WARNING : This modifies the env! Not pure!
+
+    """
+    if not hasattr(env, 'shape_feature'):
+        env.extend(theano.tensor.opt.ShapeFeature())
+
+    sym_to_num_dict = {sym: num
+                        for input in input_shapes
+                        for sym, num in zip(env.shape_feature.shape_of[input],
+                                            input_shapes[input])}
+    def sym_to_num(sym):
+        """ sym to num dict doesn't hold theano constants - add a case """
+        if sym in sym_to_num_dict:
+            return sym_to_num_dict[sym]
+        if isinstance(sym, theano.Constant):
+            return sym.value
+
+    return {var: tuple(map(sym_to_num, env.shape_feature.shape_of[var]))
+            for var in env.shape_feature.shape_of}
+

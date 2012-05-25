@@ -21,3 +21,18 @@ def test_complex_env():
     assert type(pack(env)) is str
     assert isinstance(math_optimize(env), theano.Env)
     assert str(unpack(pack(env))) == str(env)
+
+def test_shape_of_variable():
+    x = T.matrix('x')
+    y = x+x
+    env = theano.Env([x], [y])
+    assert shape_of_variables(env, {x: (5, 5)}) == {x: (5, 5), y: (5, 5)}
+
+    x = T.matrix('x')
+    y = T.dot(x, x.T)
+    env = theano.Env([x], [y])
+    shapes = shape_of_variables(env, {x: (5, 1)})
+    assert shapes[x] == (5, 1)
+    assert shapes[y] == (5, 5)
+
+
