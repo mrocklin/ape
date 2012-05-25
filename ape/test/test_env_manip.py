@@ -35,4 +35,8 @@ def test_shape_of_variable():
     assert shapes[x] == (5, 1)
     assert shapes[y] == (5, 5)
 
-
+def test_precedes():
+    x = theano.tensor.matrix('x')
+    y = x+x
+    z = y*y
+    assert precedes(y.owner, z.owner)

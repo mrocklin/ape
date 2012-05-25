@@ -81,3 +81,6 @@ def shape_of_variables(env, input_shapes):
     return {var: tuple(map(sym_to_num, env.shape_feature.shape_of[var]))
             for var in env.shape_feature.shape_of}
 
+def precedes(a, b):
+    """ does a directly precede b ? """
+    return len(set(a.outputs).intersection(b.inputs)) != 0
