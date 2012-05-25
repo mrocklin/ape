@@ -1,8 +1,9 @@
-#!/home/mrocklin/Software/epd-7.2-1-rh5-x86/bin/python
-
 """
 We need to communicate hostnames to all processors
 We use the mpi4py alltoall function
+
+usage
+mpiexec -np 3 python alltoall-test.py
 """
 
 from mpi4py import MPI
@@ -17,7 +18,5 @@ rank = comm.Get_rank()
 num_procs = MPI.COMM_WORLD.Get_size()
 host = host_name()
 
-ranks = comm.alltoall([host]*num_procs)
-print ranks
-
-
+names = comm.alltoall([host]*num_procs)
+print names
