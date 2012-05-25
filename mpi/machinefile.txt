@@ -1,3 +1,3 @@
-ankaa
-mimosa
-bellatrix
+ankaa.cs.uchicago.edu
+mimosa.cs.uchicago.edu
+bellatrix.cs.uchicago.edu
