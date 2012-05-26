@@ -14,6 +14,4 @@ def test_make_ilp():
             dummy_comm_cost, dummy_ability, 100)
 
     prob.solve()
-    assert Cmax.value() == 13
-
-
+    assert Cmax.value() == 5

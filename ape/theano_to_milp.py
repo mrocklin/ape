@@ -6,7 +6,7 @@ import pulp
 def dummy_compute_cost(an, id):
     return 1
 def dummy_comm_cost(an, from_id, to_id):
-    return 2
+    return 0 if from_id == to_id else 2
 
 def dummy_ability(an, machine):
     if an == None: # input node!
@@ -31,3 +31,13 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
     prob.solver.maxSeconds = max_time
 
     return prob, X, S, Cmax
+
+def compute_schedule(prob, X, S, Cmax):
+    prob.solve()
+
+    def runs_on(job, X):
+        return [k for k,v in X[job].items() if v.value()==1][0]
+
+    sched = [(job,(time.value(), runs_on(job,X))) for job, time in S.items()]
+    sched.sort(key=lambda x:x[1])
+    return sched
