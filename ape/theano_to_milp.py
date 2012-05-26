@@ -14,6 +14,17 @@ def dummy_ability(an, machine):
     return 1
 
 def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
+    """
+    Take an Env, a list of machines, and functions to tell us compute and
+    communication times.
+
+    Return a pulp integer linear program.
+
+    See Also:
+        compute_schedule
+
+    """
+
     jobs = list(env.nodes)
 
     P = {(a, b): precedes(a, b) for a in jobs for b in jobs}
@@ -33,11 +44,20 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
     return prob, X, S, Cmax
 
 def compute_schedule(prob, X, S, Cmax):
+    """
+    Take the outputs of make_ilp and produce a list of the form
+    [job, (start_time, machine_id),
+     job, (start_time, machine_id),
+     ... ]
+
+    sorted by start_time.
+
+    >>> sched = compute_schedule(*make_ilp(env, ... ))
+    """
     prob.solve()
 
     def runs_on(job, X):
         return [k for k,v in X[job].items() if v.value()==1][0]
 
     sched = [(job,(time.value(), runs_on(job,X))) for job, time in S.items()]
-    sched.sort(key=lambda x:x[1])
-    return sched
+    return list(sorted(sched, key=lambda x:x[1]))
