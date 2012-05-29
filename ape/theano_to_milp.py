@@ -18,7 +18,16 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
     Take an Env, a list of machines, and functions to tell us compute and
     communication times.
 
-    Return a pulp integer linear program.
+    inputs
+    ------
+    env :: theano.Env object - represents computational graph
+    machine_ids  :: [machine identifier] (iterable)
+    compute_time :: theano.Apply, id     -> time (float)
+    comm_time    :: theano.Apply, id, id -> time (float)
+    ability      :: theano.Apply, id     -> 1 or 0
+    max_time     :: time (float)
+
+    Returns a pulp integer linear program.
 
     See Also:
         compute_schedule
