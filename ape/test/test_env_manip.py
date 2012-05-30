@@ -40,3 +40,11 @@ def test_precedes():
     y = x+x
     z = y*y
     assert precedes(y.owner, z.owner)
+
+def test_env_with_names():
+    x = T.matrix('x')
+    y = x+x*x
+    env = theano.Env([x], [y])
+    env = env_with_names(env)
+    assert set(("x", "var_0", "var_1", "var_2")).issuperset(
+            {var.name for var in env.variables})

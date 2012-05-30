@@ -84,3 +84,12 @@ def shape_of_variables(env, input_shapes):
 def precedes(a, b):
     """ does a directly precede b ? """
     return len(set(a.outputs).intersection(b.inputs)) != 0
+
+def env_with_names(env):
+    ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
+    env = theano.Env(ins, outs)
+
+    for i, var in enumerate(env.variables):
+        var.name = var.name or "var_%d"%i
+
+    return env
