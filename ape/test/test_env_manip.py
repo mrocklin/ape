@@ -1,26 +1,35 @@
 from ape.env_manip import *
 
-def test_simple_env():
-    x = T.matrix('x')
-    y = x+x*x
-    env = theano.Env([x], [y])
+x = T.matrix('x')
+y = x+x*x
+simple_env = theano.Env([x], [y])
 
-    assert type(pack(env)) is str
-    assert isinstance(math_optimize(env), theano.Env)
-    assert str(unpack(pack(env))) == str(env)
-    assert str(math_optimize(env)) == \
+x = T.matrix('x')
+y = T.matrix('y')
+z = T.dot(x, y) * T.sin(x) - y.sum(0)
+complex_env = theano.Env([x, y], [z])
+
+def test_pack():
+    assert type(pack(simple_env)) is str
+    assert str(unpack(pack(simple_env))) == str(simple_env)
+    assert str(unpack(pack(complex_env))) == str(complex_env)
+
+def test_pack_file():
+    f = open('_temp.dat', 'w')
+    pack(simple_env, f)
+    pack(complex_env, f)
+    f.close()
+    f = open('_temp.dat', 'r')
+    simple_env2 = unpack(f)
+    complex_env2 = unpack(f)
+
+    assert str(simple_env) == str(simple_env2)
+    assert str(complex_env) == str(complex_env2)
+
+def test_math_optimize():
+    assert isinstance(math_optimize(simple_env), theano.Env)
+    assert str(math_optimize(simple_env)) == \
             "[Elemwise{Composite{[add(i0, sqr(i0))]}}(x)]"
-
-def test_complex_env():
-    x = T.matrix('x')
-    y = T.matrix('y')
-
-    z = T.dot(x, y) * T.sin(x) - y.sum(0)
-    env = theano.Env([x, y], [z])
-
-    assert type(pack(env)) is str
-    assert isinstance(math_optimize(env), theano.Env)
-    assert str(unpack(pack(env))) == str(env)
 
 def test_shape_of_variable():
     x = T.matrix('x')

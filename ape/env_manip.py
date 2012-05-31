@@ -17,9 +17,14 @@ def math_optimize(env):
     fast_run_no_inplace.optimize(optimized_env) # this is inplace
     return optimized_env
 
-def pack(env):
+def pack(env, file=None):
     """
     Pickles a theano.Env into a string
+
+    Inputs
+    env - a theano.Env object
+    file - a file into which we should dump the result
+         - if left empty we return a string
 
     >>> import theano
     >>> import cPickle
@@ -37,17 +42,32 @@ def pack(env):
     """
 
     ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
-    s = cPickle.dumps((ins, outs))
-    return s
+    if file:
+        cPickle.dump((ins, outs), file)
+        return file
+    else:
+        s = cPickle.dumps((ins, outs))
+        return s
 
-def unpack(s):
+def unpack(source):
     """
     Unpickle a packed string into an Env
+
+    source can be a
+        string
+        file
+
+    if the source is a file then one can call pack and unpack many times on the
+    same file
 
     See Also:
         pack
     """
-    ins, outs = cPickle.loads(s)
+    if isinstance(source, str):
+        ins, outs = cPickle.loads(source)
+    elif isinstance(source, file):
+        ins, outs = cPickle.load(source)
+
     env = theano.Env(ins, outs)
     return env
 
