@@ -24,7 +24,26 @@ def is_output(var):
     c = var.clients
     return len(c) == 1 and c[0][0] == 'output'
 
-def gen_code(sched, env_filename):
+def machine_dict_to_code(d):
+    """ Converts a machine indexed dict into conditional code
+
+    Turns a dict
+    {machine1: [line, line, line], machine2: [line]}
+
+    into a string of a sequence of if statements
+
+    if host == 'machine1':
+        line
+        line
+        line
+    if host == 'machine2':
+        line
+    """
+    return '\n'.join(["if host == '%s':\n"%machine +
+        '\n'.join(["    "+line for line in d[machine]]) for machine in d])
+
+
+def gen_code(sched, env_filename, var_shapes, var_types):
     env_file = open(env_filename, 'w')
 
     jobs_of, job_runs_on, var_stored_on, var_needed_on = useful_dicts(sched)
@@ -39,17 +58,15 @@ def gen_code(sched, env_filename):
     variable_tag_string = "tag_of = %s"%str(variable_tags)
     fn_names = {env: "fn_%d"%i for i, env in enumerate(envs)}
 
-    def stringify(env):
-        return '"""' + pack(env).replace('\n', r'\n') + '"""'
-
     env_file = open(env_filename, 'w')
     pack_many(envs, env_file)
     env_file.close()
 
-    compile_string =  "\n".join(["if host == '%s':\n"%job_runs_on[envs[i]] +
-                            "    link = mode.linker.accept(envs[%d])\n"%i+
-                            "    fn_%d = link.make_function()"%i
-                            for i in range(len(envs))])
+    compile_dict = {machine : sum([["link = mode.linker.accept(envs[%d])"%i,
+                                   "fn_%d = link.make_function()"%i]
+                                   for i in map(job_id, jobs_of[machine])], [])
+                                   for machine in machines}
+    compile_string = machine_dict_to_code(compile_dict)
 
     code = dict()
     for machine in machines:
@@ -79,11 +96,19 @@ def gen_code(sched, env_filename):
 
         code[machine] = lines
 
-    code_string = '\n'.join(["\nif host == '%s':\n"%machine +
-        '\n'.join(["    "+line for line in code[machine]]) for machine in code])
+    code_string = machine_dict_to_code(code)
 
-    return {"env_filename"      : env_filename,
-            "compile"           : compile_string,
-            "variable_tags"     : variable_tag_string,
-            "host_code"         : code_string,
-            "host_code_dict"    : code}
+    # variable_initialization
+    var_init_dict = {machine :
+           ["%s = np.empty(%s, dtype=%s)"%(var, var_shapes[var], var_types[var])
+                for var in var_needed_on if var_needed_on[var] == machine]
+                for machine in machines}
+
+    var_init_string = machine_dict_to_code(var_init_dict)
+
+    return {"env_filename"              : env_filename,
+            "compile"                   : compile_string,
+            "variable_tags"             : variable_tag_string,
+            "host_code"                 : code_string,
+            "host_code_dict"            : code,
+            "variable_initialization"    : var_init_string}

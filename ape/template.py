@@ -39,7 +39,11 @@ envs = unpack_many(env_file)
 env_file.close()
 
 mode = theano.compile.mode.get_default_mode()
+# Compile Theano Functions
 %(compile)s
 
+# Initialize variables
+%(variable_initialization)s
 
+# Compute
 %(host_code)s
