@@ -6,9 +6,9 @@ def host_name():
     import os
     return os.popen('uname -n').read().strip()
 
-rank = comm.Get_rank()
 comm = MPI.COMM_WORLD
-size = MPI.COMM_WORLD.Get_size()
+rank = comm.Get_rank()
+size = comm.Get_size()
 host = host_name()
 def exchange_ranks():
     names = comm.alltoall([host]*size)
@@ -34,7 +34,7 @@ def wait_on_send(var, id):
 def wait_on_recv(var, id):
     recv_requests[var, id].wait()
 
-env_file = open(%(env_filename)s, 'r')
+env_file = open("%(env_filename)s", 'r')
 envs = unpack_many(env_file)
 env_file.close()
 
