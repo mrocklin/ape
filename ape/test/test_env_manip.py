@@ -22,9 +22,21 @@ def test_pack_file():
     f = open('_temp.dat', 'r')
     simple_env2 = unpack(f)
     complex_env2 = unpack(f)
+    f.close()
 
     assert str(simple_env) == str(simple_env2)
     assert str(complex_env) == str(complex_env2)
+
+def test_pack_many():
+    f = open('_temp.dat', 'w')
+    pack_many((simple_env, complex_env), f)
+    f.close()
+    f = open('_temp.dat', 'r')
+    (simple_env2, complex_env2) = unpack_many(f)
+
+    assert str(simple_env) == str(simple_env2)
+    assert str(complex_env) == str(complex_env2)
+
 
 def test_math_optimize():
     assert isinstance(math_optimize(simple_env), theano.Env)

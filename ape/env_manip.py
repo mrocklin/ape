@@ -48,6 +48,12 @@ def pack(env, file=None):
     else:
         s = cPickle.dumps((ins, outs))
         return s
+def pack_many(envs, target_file):
+    """ Pack many envs into a file """
+    assert isinstance(target_file, file)
+    for env in envs:
+        pack(env, target_file)
+    return target_file
 
 def unpack(source):
     """
@@ -70,6 +76,16 @@ def unpack(source):
 
     env = theano.Env(ins, outs)
     return env
+def unpack_many(target_file):
+    """ Pack many envs into a file """
+    assert isinstance(target_file, file)
+    envs = []
+    while(True):
+        try:
+            envs.append(unpack(target_file))
+        except EOFError:
+           return envs
+    assert False
 
 def shape_of_variables(env, input_shapes):
     """
