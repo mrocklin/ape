@@ -36,16 +36,21 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
 
     jobs = list(env.nodes)
 
-    P = {(a, b): precedes(a, b) for a in jobs for b in jobs}
-    R = {job : 0 for job in jobs}
-    D = {(job, id) : compute_time(job, id) for job in jobs
-                                           for id in machine_ids}
+    P = {(job1, job2): precedes(job1, job2) for job1 in jobs for job2 in jobs}
+
+    R = { job : 0                           for job in jobs}
+
+    D = {(job, id) : compute_time(job, id)  for job in jobs
+                                            for id in machine_ids}
+
     C = {(job, id1, id2) : comm_time(job, id1, id2)
-                    for job in jobs
-                    for id1 in machine_ids
-                    for id2 in machine_ids}
-    B = {(job, id) : ability(job, id) for job in jobs
-                                      for id in machine_ids}
+                                            for job in jobs
+                                            for id1 in machine_ids
+                                            for id2 in machine_ids}
+
+    B = {(job, id) : ability(job, id)       for job in jobs
+                                            for id in machine_ids}
+
     prob, X, S, Cmax = schedule(jobs, machine_ids, D, C, R, B, P, max_time)
     prob.solver = pulp.LpSolverDefault
     prob.solver.maxSeconds = max_time
