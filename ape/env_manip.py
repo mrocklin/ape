@@ -50,7 +50,8 @@ def pack(env, file=None):
         return s
 def pack_many(envs, target_file):
     """ Pack many envs into a file """
-    assert isinstance(target_file, file)
+    if isinstance(target_file, str):
+        target_file = open(target_file, 'r')
     for env in envs:
         pack(env, target_file)
     return target_file
@@ -78,7 +79,8 @@ def unpack(source):
     return env
 def unpack_many(target_file):
     """ Pack many envs into a file """
-    assert isinstance(target_file, file)
+    if isinstance(target_file, str):
+        target_file = open(target_file, 'r')
     envs = []
     while(True):
         try:
