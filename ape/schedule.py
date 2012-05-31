@@ -46,8 +46,9 @@ def gen_code(sched, env_filename):
     pack_many(envs, env_file)
     env_file.close()
 
-    compile_string =  "\n".join(["link = mode.linker.accept(envs[%d])\n"%i+
-                            "fn_%d = link.make_function()"%i
+    compile_string =  "\n".join(["if host == '%s':\n"%job_runs_on[envs[i]] +
+                            "    link = mode.linker.accept(envs[%d])\n"%i+
+                            "    fn_%d = link.make_function()"%i
                             for i in range(len(envs))])
 
     code = dict()
