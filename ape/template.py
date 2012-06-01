@@ -1,4 +1,5 @@
 from mpi_prelude import *
+import theano
 
 # Unpack envs/jobs from file
 from env_manip import unpack_many

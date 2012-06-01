@@ -1,5 +1,4 @@
 from mpi4py import MPI
-import theano
 import numpy as np
 
 def host_name():
