@@ -22,10 +22,10 @@ rank_of_machine = exchange_ranks()
 send_requests = dict()
 recv_requests = dict()
 def send(var, tag, dest_machine_id):
-    request = comm.isend(var, rank_of_machine[dest_machine_id], tag)
+    request = comm.Isend(var, rank_of_machine[dest_machine_id], tag)
     send_requests[tag, dest_machine_id] = request
 def recv(var, tag, source_machine_id):
-    request = comm.irecv(var, rank_of_machine[source_machine_id], tag)
+    request = comm.Irecv(var, rank_of_machine[source_machine_id], tag)
     recv_requests[tag, source_machine_id] = request
 def wait_on_send(tag, id):
     send_requests[tag, id].wait()
@@ -45,6 +45,9 @@ mode = theano.compile.mode.get_default_mode()
 
 # Non-blocking receives
 %(recv)s
+
+# Wait for everyone to finish compiling and setting up receives
+comm.barrier()
 
 # Compute
 %(compute)s
