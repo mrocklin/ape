@@ -58,7 +58,8 @@ for many array operations on both CPUs and GPUs, allowing us separate this
 scheduling work from orthogonal work in many-core computing. 
 
 What we produce
----------------
+===============
+
 This project takes 
  * Theano input code like the example above (specifically we want a theano.Env)
  * Functions to estimate the cost of running and communicating operations on
@@ -68,6 +69,12 @@ This project takes
 and produces
  * a file, env.dat which contains compilable theano objects
  * an orchestrating .py file that you can run with mpiexec/mpirun
+
+Status
+======
+
+This project is not fully functional nor substantially tested. It should not
+yet be used.
 
 Author
 ======
