@@ -36,12 +36,16 @@ env_file = open("%(env_filename)s", 'r')
 envs = unpack_many(env_file)
 env_file.close()
 
-mode = theano.compile.mode.get_default_mode()
 # Compile Theano Functions
+mode = theano.compile.mode.get_default_mode()
 %(compile)s
 
 # Initialize variables
 %(variable_initialization)s
 
+# Non-blocking receives
+%(recv)s
+
 # Compute
-%(host_code)s
+%(compute)s
+

@@ -12,7 +12,7 @@ def test_gen_code_simple():
     env = theano.Env([x], [y])
     env = env_with_names(env)
 
-    machine_ids = ["ankaa", "arroyitos"]
+    machine_ids = ["ankaa", "mimosa"]
     _test_gen_code(env, machine_ids)
 
 def test_gen_code_complex():
@@ -21,7 +21,7 @@ def test_gen_code_complex():
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
     env = theano.Env([x, y], [z])
     env = env_with_names(env)
-    machine_ids = ["ankaa", "arroyitos"]
+    machine_ids = ["ankaa", "mimosa"]
 
     _test_gen_code(env, machine_ids)
 
@@ -48,7 +48,8 @@ def _test_gen_code(env, machine_ids):
     assert all(var.name in varinit for var in env.variables
             if not is_output(var))
 
-    host_code = d['host_code']
+    recv_code = d['recv']
+    host_code = d['compute']
 
 def test_machine_dict_to_code():
     d = {'cpu':['x = 1', 'y = 2'], 'gpu':['z = 3']}
@@ -60,3 +61,7 @@ def test_machine_dict_to_code():
 if host == 'cpu':
     x = 1
     y = 2""")
+def test_empty_machine_dict_to_code():
+    d = {'cpu':[]}
+    s = machine_dict_to_code(d)
+    assert s=="if host == 'cpu':\n    pass"
