@@ -48,11 +48,6 @@ def _test_gen_code(env, machine_ids):
     assert all(var.name in varinit for var in env.variables
             if not is_output(var))
 
-    var_tags = eval(d['variable_tags'].split('= ')[1])
-    # all variables accounted for
-    assert all(var.name in var_tags for var in env.variables)
-    assert len(set(var_tags.values())) == len(var_tags.values()) # no repeats
-
     host_code = d['host_code']
 
 def test_machine_dict_to_code():

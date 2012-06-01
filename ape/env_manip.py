@@ -112,9 +112,9 @@ def shape_of_variables(env, input_shapes):
     def sym_to_num(sym):
         """ sym to num dict doesn't hold theano constants - add a case """
         if sym in sym_to_num_dict:
-            return sym_to_num_dict[sym]
+            return int(sym_to_num_dict[sym])
         if isinstance(sym, theano.Constant):
-            return sym.value
+            return int(sym.value)
 
     return {var: tuple(map(sym_to_num, env.shape_feature.shape_of[var]))
             for var in env.shape_feature.shape_of}

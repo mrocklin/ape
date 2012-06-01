@@ -55,7 +55,6 @@ def gen_code(sched, env_filename, var_shapes, var_types):
     variable_names = [var.name  for env in envs
                                 for var in env.inputs+env.outputs]
     variable_tags = {name : i for i, name in enumerate(variable_names)}
-    variable_tag_string = "tag_of = %s"%str(variable_tags)
     fn_names = {env: "fn_%d"%i for i, env in enumerate(envs)}
 
     env_file = open(env_filename, 'w')
@@ -79,8 +78,10 @@ def gen_code(sched, env_filename, var_shapes, var_types):
                 vid = var_id(var)
                 source = var_stored_on[vid]
                 if source!=machine:
-                    lines = ["recv(%s, %s)"%(vid, source)] + lines
-                    lines.append("wait(%s, %s)"%(vid, source))
+                    lines = ["recv(%s, %s, '%s')"%(
+                        vid, variable_tags[vid], source)] + lines
+                    lines.append("wait_on_recv(%s, '%s')"%(
+                        variable_tags[vid], source))
             # Compute
             lines.append(', '.join(map(var_id, job.outputs)) +
                          " = %s("%fn_names[job] +
@@ -92,7 +93,8 @@ def gen_code(sched, env_filename, var_shapes, var_types):
                 vid = var_id(var)
                 dest = var_needed_on[vid]
                 if dest!=machine:
-                    lines.append("send(%s, %s)"%(vid, var_needed_on[vid]))
+                    lines.append("send(%s, %s, '%s')"%(
+                        vid, variable_tags[vid], var_needed_on[vid]))
 
         code[machine] = lines
 
@@ -108,7 +110,6 @@ def gen_code(sched, env_filename, var_shapes, var_types):
 
     return {"env_filename"              : env_filename,
             "compile"                   : compile_string,
-            "variable_tags"             : variable_tag_string,
             "host_code"                 : code_string,
             "host_code_dict"            : code,
             "variable_initialization"    : var_init_string}

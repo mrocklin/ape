@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import theano
 from env_manip import unpack_many
+import numpy as np
 
 def host_name():
     import os
@@ -17,22 +18,19 @@ def exchange_ranks():
 # Perform handshake
 rank_of_machine = exchange_ranks()
 
-# dictionary mapping variable_name to unique key
-%(variable_tags)s
-
 # Wrap MPI calls
 send_requests = dict()
 recv_requests = dict()
-def send(var, dest_machine_id):
-    request = comm.isend(var, rank_of_machine[dest_machine_id], tag_of[var])
-    send_requests[var, dest_machine_id] = request
-def recv(var, source_machine_id):
-    request = comm.irecv(var, rank_of_machine[source_machine_id], tag_of[var])
-    recv_requests[var, source_machine_id] = request
-def wait_on_send(var, id):
-    send_requests[var, id].wait()
-def wait_on_recv(var, id):
-    recv_requests[var, id].wait()
+def send(var, tag, dest_machine_id):
+    request = comm.isend(var, rank_of_machine[dest_machine_id], tag)
+    send_requests[tag, dest_machine_id] = request
+def recv(var, tag, source_machine_id):
+    request = comm.irecv(var, rank_of_machine[source_machine_id], tag)
+    recv_requests[tag, source_machine_id] = request
+def wait_on_send(tag, id):
+    send_requests[tag, id].wait()
+def wait_on_recv(tag, id):
+    recv_requests[tag, id].wait()
 
 env_file = open("%(env_filename)s", 'r')
 envs = unpack_many(env_file)
