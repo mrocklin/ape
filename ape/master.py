@@ -36,7 +36,7 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     # Turn this schedule into python code
     specifics = gen_code(sched, 'env.dat', shapes)
 
-    # Insert this python code into a template.py file
+    # Read code template from template.py
     f = open('template.py'); code = f.read(); f.close()
 
     return code%specifics
