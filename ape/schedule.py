@@ -46,7 +46,7 @@ def machine_dict_to_code(d):
             if d[machine] else "    pass")
         for machine in d]))
 
-def gen_code(sched, env_filename, var_shapes, var_types):
+def gen_code(sched, env_filename, var_shapes):
     env_file = open(env_filename, 'w')
 
     jobs_of, job_runs_on, var_stored_on, var_needed_on = useful_dicts(sched)
@@ -59,6 +59,9 @@ def gen_code(sched, env_filename, var_shapes, var_types):
                                 for var in env.inputs+env.outputs]
     variable_tags = {name : i for i, name in enumerate(variable_names)}
     fn_names = {env: "fn_%d"%i for i, env in enumerate(envs)}
+    var_dtype = {var_id(var) : var.dtype for env in envs
+                                          for var in env.inputs+env.outputs}
+    variable_ids = var_dtype.keys()
 
     env_file = open(env_filename, 'w')
     pack_many(envs, env_file)
@@ -70,9 +73,11 @@ def gen_code(sched, env_filename, var_shapes, var_types):
                                    for machine in machines}
 
     var_init_code = {machine :
-           ["%s = np.empty(%s, dtype=%s)"%(var, var_shapes[var], var_types[var])
-                for var in var_needed_on if machine in var_needed_on[var]]
-                for machine in machines}
+           ["%s = np.empty(%s, dtype='%s')"%(
+                                        vid, var_shapes[vid], var_dtype[vid])
+                for vid in variable_ids
+                if machine in var_needed_on[vid]]
+            for machine in machines}
 
     recv_code = {machine:
             ["recv(%s, %s, '%s')"%(vid, variable_tags[vid], var_stored_on[vid])

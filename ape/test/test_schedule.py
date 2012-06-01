@@ -32,10 +32,8 @@ def _test_gen_code(env, machine_ids):
 
     shapes = shape_of_variables(env, {var:(5,5) for var in env.inputs})
     shapes = {k.name : v for k,v in shapes.items()}
-    dtypes = {var:"float64" for var in env.variables}
-    dtypes = {k.name : v for k,v in dtypes.items()}
 
-    d = gen_code(sched, 'envs.dat', shapes, dtypes)
+    d = gen_code(sched, 'envs.dat', shapes)
 
     env_filename = d['env_filename']
     assert env_filename == 'envs.dat'
