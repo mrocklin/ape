@@ -12,9 +12,11 @@ def useful_dicts(sched):
 
     var_stored_on = {var_id(var) : machine for job, (time, machine) in sched
                                            for var in job.outputs}
-
-    var_needed_on = {var_id(var) : machine for job, (time, machine) in sched
-                                           for var in job.inputs}
+    vars = [var for job, _ in sched for var in (job.inputs+job.outputs)]
+    var_needed_on = {var_id(var) :
+                        [machine for job, (time, machine) in sched
+                        if var in job.inputs and job_runs_on[job] == machine]
+                     for var in vars}
 
     return jobs_of, job_runs_on, var_stored_on, var_needed_on
 
@@ -69,7 +71,7 @@ def gen_code(sched, env_filename, var_shapes, var_types):
 
     var_init_code = {machine :
            ["%s = np.empty(%s, dtype=%s)"%(var, var_shapes[var], var_types[var])
-                for var in var_needed_on if var_needed_on[var] == machine]
+                for var in var_needed_on if machine in var_needed_on[var]]
                 for machine in machines}
 
     recv_code = {machine:
@@ -81,7 +83,7 @@ def gen_code(sched, env_filename, var_shapes, var_types):
             for machine in machines}
 
     compute_code = {machine:
-        sum([["wait_on_recv(%s,'%s)"%(variable_tags[vid], var_stored_on[vid])
+        sum([["wait_on_recv(%s,'%s')"%(variable_tags[vid], var_stored_on[vid])
                 for vid, var in zip(map(var_id, job.inputs), job.inputs)
                 if not is_input(var)
                 and var_stored_on[vid] != machine]                  +
@@ -90,10 +92,10 @@ def gen_code(sched, env_filename, var_shapes, var_types):
              " = %s("%fn_names[job] +
              ', '.join(map(var_id, job.inputs)) + ')']              +
 
-            ["send(%s, %s, '%s')"%(vid, variable_tags[vid], var_needed_on[vid])
+            ["send(%s, %s, '%s')"%(vid, variable_tags[vid], to_machine)
                 for vid, var in zip(map(var_id, job.outputs), job.outputs)
                 if not is_output(var)
-                and var_needed_on[vid] != machine]
+                for to_machine in [m for m in var_needed_on[vid] if m!=machine]]
 
             for job in jobs_of[machine]], [])
         for machine in machines}
