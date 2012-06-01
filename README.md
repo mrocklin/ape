@@ -1,23 +1,25 @@
 APE
 ===
 
-This is a project to investigate the feasibility of static scheduling of array
+This is a project to investigate the feasibility of statically scheduling array
 primitive operations onto heterogeneous hardware.
 
 Scheduling is hard. It is difficult to 
 
- * predict runtimes and communication times
- * predict runtimes and communication times on heterogeneous hardware
- * find an optimal schedule once these times have been obtained
- * write code to hetergeneous hardware
+ * predict runtimes 
+ * predict communication times
+ * support operations on heterogeneous hardware
+ * find an optimal schedule (this is NP-Hard)
 
 We pose that these problems become managable under a highly reduced and very
-structured set of allowable operations. In particular array operations
+structured set of allowable operations. In particular we consider array operations as such a set. This is because they
 
- * Are highly predictable (once problem sizes exceed the cache)
- * Are easy to model
- * Can express many scientific programs with little complexity
- * Present a uniform interface to heterogeneous hardware
+ * are highly predictable (once problem sizes exceed the cache)
+ * are easy to model
+ * can express many scientific programs with little complexity (NP-Hard
+   problems become feasible)
+ * Present a uniform interface to heterogeneous hardware (I.e. we have both a
+   CPU and GPU BLAS)
 
 Technology
 ==========
@@ -70,11 +72,12 @@ and produces
  * a file, env.dat which contains compilable theano objects
  * an orchestrating .py file that you can run with mpiexec/mpirun
 
+Look at `ape/example.py` and `ape/master.py` for an example.
+
 Status
 ======
 
-This project is not fully functional nor substantially tested. It should not
-yet be used.
+This project is not functional. You should not use it. 
 
 Author
 ======
