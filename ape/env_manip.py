@@ -91,6 +91,7 @@ def unpack_many(target_file):
 
 def shape_of_variables(env, input_shapes):
     """
+    Compute the numeric shape of all intermediate variables given input shapes
 
     Inputs:
         env - the theano.Env in question
@@ -108,6 +109,7 @@ def shape_of_variables(env, input_shapes):
     >>> shape_of_variables(env, {x: (1024, 1024)})
     {y: (512, 1024), x: (1024, 1024)}
     """
+
     if not hasattr(env, 'shape_feature'):
         env.extend(theano.tensor.opt.ShapeFeature())
 
@@ -125,8 +127,8 @@ def shape_of_variables(env, input_shapes):
 
     sym_to_num_dict = dict(zip(output_dims, numeric_output_dims))
 
-    return {var: tuple(sym_to_num_dict[dim]
-                             for dim in env.shape_feature.shape_of[var])
+    return {var: tuple(sym_to_num_dict[sym]
+                             for sym in env.shape_feature.shape_of[var])
                              for var in env.shape_feature.shape_of}
 
 def precedes(a, b):
