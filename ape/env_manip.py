@@ -101,6 +101,12 @@ def shape_of_variables(env, input_shapes):
 
     WARNING : This modifies the env! Not pure!
 
+    >>> import theano
+    >>> x = theano.tensor.matrix('x')
+    >>> y = x[512:]; y.name = 'y'
+    >>> env = theano.Env([x], [y])
+    >>> shape_of_variables(env, {x: (1024, 1024)})
+    {y: (512, 1024), x: (1024, 1024)}
     """
     if not hasattr(env, 'shape_feature'):
         env.extend(theano.tensor.opt.ShapeFeature())
