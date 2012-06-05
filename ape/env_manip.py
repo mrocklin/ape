@@ -105,19 +105,23 @@ def shape_of_variables(env, input_shapes):
     if not hasattr(env, 'shape_feature'):
         env.extend(theano.tensor.opt.ShapeFeature())
 
-    sym_to_num_dict = {sym: num
-                        for input in input_shapes
-                        for sym, num in zip(env.shape_feature.shape_of[input],
-                                            input_shapes[input])}
-    def sym_to_num(sym):
-        """ sym to num dict doesn't hold theano constants - add a case """
-        if sym in sym_to_num_dict:
-            return int(sym_to_num_dict[sym])
-        if isinstance(sym, theano.Constant):
-            return int(sym.value)
+    input_dims  = [dimension for inp in env.inputs
+                             for dimension in env.shape_feature.shape_of[inp]]
 
-    return {var: tuple(map(sym_to_num, env.shape_feature.shape_of[var]))
-            for var in env.shape_feature.shape_of}
+    output_dims = [dimension for shape in env.shape_feature.shape_of.values()
+                             for dimension in shape]
+
+    compute_shapes = theano.function(input_dims, output_dims)
+
+    numeric_input_dims  = [dim for inp in env.inputs
+                               for dim in input_shapes[inp]]
+    numeric_output_dims = compute_shapes(*numeric_input_dims)
+
+    sym_to_num_dict = dict(zip(output_dims, numeric_output_dims))
+
+    return {var: tuple(sym_to_num_dict[dim]
+                             for dim in env.shape_feature.shape_of[var])
+                             for var in env.shape_feature.shape_of}
 
 def precedes(a, b):
     """ does a directly precede b ? """

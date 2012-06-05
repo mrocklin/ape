@@ -43,7 +43,7 @@ def test_math_optimize():
     assert str(math_optimize(simple_env)) == \
             "[Elemwise{Composite{[add(i0, sqr(i0))]}}(x)]"
 
-def test_shape_of_variable():
+def test_shape_of_variables():
     x = T.matrix('x')
     y = x+x
     env = theano.Env([x], [y])
@@ -55,6 +55,13 @@ def test_shape_of_variable():
     shapes = shape_of_variables(env, {x: (5, 1)})
     assert shapes[x] == (5, 1)
     assert shapes[y] == (5, 5)
+
+def test_shape_of_subtensor():
+    x = theano.tensor.matrix('x')
+    subx = x[1:]
+    env = theano.Env([x], [subx])
+    shapes = shape_of_variables(env, {x: (10, 10)})
+    assert shapes[subx] == (9, 10)
 
 def test_precedes():
     x = theano.tensor.matrix('x')
