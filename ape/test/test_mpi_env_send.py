@@ -4,12 +4,13 @@ def test_mpi_send():
     # Run this file with two processors
     assert os.popen('mpiexec -np 2 python /home/mrocklin/workspace/ape/ape/test/test_mpi_env_send.py').read() == "True"
 
+import sys
+import os
+sys.path.insert(0,os.path.abspath("/home/mrocklin/workspace/ape/"))
 # If we're being run by someone (hopefully mpiexec)
 if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
 
-    from env_manip import *
+    from ape.env_manip import *
     from mpi4py import MPI
     import numpy as np
 
@@ -29,4 +30,3 @@ if __name__ == '__main__':
         env = unpack(s)
         f = theano.function(env.inputs, env.outputs[0])
         sys.stdout.write(str(f(np.ones((5,5)).astype(np.float32)).sum() == 50))
-

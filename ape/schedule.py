@@ -109,12 +109,12 @@ def gen_code(sched, env_filename, var_shapes):
             for machine in machines}
 
     # Creates code like
-    # wait_on_recv(13, "ankaa")
+    # wait(13)
     # var1, var2 = fn_15(var5, var3)
     # send(var1, 15, "mimosa")
     # send(var2, 18, "arroyitos")
     compute_code = {machine:
-        sum([["wait_on_recv(%s,'%s')"%(variable_tags[vid], var_stored_on[vid])
+        sum([["wait(%s)"%(variable_tags[vid])
                 for vid, var in zip(map(var_id, job.inputs), job.inputs)
                 if not is_input(var)
                 and var_stored_on[vid] != machine]                  +

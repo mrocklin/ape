@@ -17,15 +17,12 @@ def exchange_ranks():
 rank_of_machine = exchange_ranks()
 
 # Wrap MPI calls
-send_requests = dict()
-recv_requests = dict()
+requests = dict()
 def send(var, tag, dest_machine_id):
     request = comm.Isend(var, rank_of_machine[dest_machine_id], tag)
-    send_requests[tag, dest_machine_id] = request
+    requests[tag] = request
 def recv(var, tag, source_machine_id):
     request = comm.Irecv(var, rank_of_machine[source_machine_id], tag)
-    recv_requests[tag, source_machine_id] = request
-def wait_on_send(tag, id):
-    send_requests[tag, id].wait()
-def wait_on_recv(tag, id):
-    recv_requests[tag, id].wait()
+    requests[tag] = request
+def wait(tag):
+    requests[tag].wait()
