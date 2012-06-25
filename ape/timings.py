@@ -1,6 +1,20 @@
 import theano
 import numpy as np
 
+def compute_runtimes(inputs, outputs, input_shapes, niter=10):
+    profmode = theano.ProfileMode(optimizer=None,
+            linker=theano.gof.OpWiseCLinker())
+    f = theano.function(inputs, outputs, mode=profmode)
+
+    numeric_inputs = [np.empty(input_shapes[var], dtype=var.dtype)
+                                                   for var in inputs]
+    for i in range(niter):  f(*numeric_inputs)
+
+    stats = profmode.profile_stats[f].apply_time
+
+    avg_time = {str(an):stats[an]/niter for an in stats}
+    return avg_time
+
 def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
     """
     Creates a function to approximate the runtime of an applynode on a machine
@@ -35,17 +49,7 @@ def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
     may fail.
     """
 
-    profmode = theano.ProfileMode(optimizer=None,
-            linker=theano.gof.OpWiseCLinker())
-    f = theano.function(inputs, outputs, mode=profmode)
-
-    numeric_inputs = [np.empty(input_shapes[var], dtype=var.dtype)
-                                                   for var in inputs]
-    for i in range(niter):  f(*numeric_inputs)
-
-    stats = profmode.profile_stats[f].apply_time
-
-    avg_time = {str(an):stats[an]/niter for an in stats}
+    avg_time = compute_runtimes(inputs, outputs, input_shapes, niter)
 
     def runtime_of(an, id):
         """ Approximates the runtime of running Apply node an on machine id """
