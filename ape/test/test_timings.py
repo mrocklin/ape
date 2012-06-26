@@ -1,4 +1,5 @@
-from ape.timings import make_runtime_fn, compute_runtimes
+from ape.timings import (make_runtime_fn, compute_runtimes,
+        make_runtime_function, save_dict, load_dict)
 import theano
 
 def test_make_runtime_fn():
@@ -11,6 +12,20 @@ def test_make_runtime_fn():
 
     assert all(isinstance(runtime_fn(an, 'ankaa'), float)
                                                 for an in env.toposort())
+
+def test_make_runtime_function():
+    data = {('A', 'B'): {'gemm':1, 'sum':2},
+            ('C',)    : {'gemm':3, 'sum':1}}
+    fn = make_runtime_function(data)
+    assert fn('A', 'gemm') == 1
+    assert fn('C', 'sum') == 1
+
+def test_save_dict():
+    data = {('A', 'B'): {'gemm':1, 'sum':2},
+            ('C',)    : {'gemm':3, 'sum':1}}
+    save_dict('_temp.tmp', data)
+    data2 = load_dict('_temp.tmp')
+    assert data == data2
 
 def test_compute_runtimes():
     x = theano.tensor.matrix('x')

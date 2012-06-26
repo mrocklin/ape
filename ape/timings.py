@@ -2,6 +2,33 @@ import theano
 import numpy as np
 
 def compute_runtimes(inputs, outputs, input_shapes, niter=10):
+    """
+    Compute runtimes of all apply nodes within an env by sampling
+
+    inputs
+    ------
+    inputs  - input variables to a computation  :: [theano.Variable]
+    outputs - output variables to a computation :: [theano.Variable]
+    input_shapes - dictionary from input variables to shapes :: {Tensor : shape}
+    niter - number of iterations to run computation :: int
+
+    outputs
+    -------
+
+    dictionary mapping string-name of apply node to expected time
+
+    >>> import theano
+    >>> x = theano.tensor.matrix('x')
+    >>> y = x+x*x
+    >>> times = compute_runtimes([x], [y], {x:(1000,1000)})
+    >>> env = theano.Env([x], [y])
+    >>> an = env.toposort()[0]
+    >>> times[str(an)]
+    .0024525
+
+    note - runtime compares the string representation of the apply node. This
+    may fail.
+    """
     profmode = theano.ProfileMode(optimizer=None,
             linker=theano.gof.OpWiseCLinker())
     f = theano.function(inputs, outputs, mode=profmode)
@@ -14,6 +41,49 @@ def compute_runtimes(inputs, outputs, input_shapes, niter=10):
 
     avg_time = {str(an):stats[an]/niter for an in stats}
     return avg_time
+
+def save_dict(filename, d):
+    file = open(filename,'w')
+    file.write(str(d))
+    file.close()
+def load_dict(filename):
+    import ast
+    file = open(filename)
+    d_string = file.read()
+    file.close()
+    d = ast.literal_eval(d_string)
+    return d
+
+
+def make_runtime_function(machine_time_dict):
+    """
+    Create a callable function from a dict containing runtimes for machines
+
+    inputs
+    ------
+    machine_time_dict : Dict mapping set of machines to times Dict
+        each times dict maps string representation of an apply node to a time
+        example:
+    >>> {('ankaa', 'mimosa'):
+            {'Elemwise{add,no_inplace}(x, Elemwise{mul,no_inplace}.0)': 0.01074,
+             'Elemwise{mul,no_inplace}(x, x)': 0.005693912506103516},
+         ('arroyitos', 'baconost'):
+            {'Elemwise{add,no_inplace}(x, Elemwise{mul,no_inplace}.0)':0.01074,
+             'Elemwise{mul,no_inplace}(x, x)': 0.005693912506103516}}
+
+    outputs
+    -------
+    A callable function that takes a machine-id (like 'ankaa') and an apply
+    node and returns a time
+    """
+    # Break out the ids to a flat dict
+    d = {id:machine_time_dict[ids] for ids in machine_time_dict for id in ids}
+
+    def runtime_fn(id, apply):
+        """ Given machine id and an apply node provides the expected runtime"""
+        return d[id][str(apply)]
+
+    return runtime_fn
 
 def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
     """
