@@ -135,11 +135,36 @@ def precedes(a, b):
     """ does a directly precede b ? """
     return len(set(a.outputs).intersection(b.inputs)) != 0
 
+def variables_of(env):
+    """ Returns the variables of an Env in a more predictable manner
+
+    This is an alternative to env.variables() which produces a set """
+    variables = [var for node in env.toposort()
+                     for var in node.inputs + node.outputs]
+    #variables = [var for node in env.toposort()
+    #                 for var in node.inputs] + env.outputs
+    out_variables = []
+    for var in variables:
+        if var not in out_variables:
+            out_variables.append(var)
+    return out_variables
+
+def variables_with_names(inputs, outputs):
+    """
+    Name all variables between inputs and outputs
+
+    Warning : Changes state! Not Pure!
+    """
+    all_variables = theano.gof.graph.variables(inputs, outputs)
+    for i, var in enumerate(all_variables):
+        var.name = var.name or "var_%d"%i
+    return all_variables
+
 def env_with_names(env):
     ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
     env = theano.Env(ins, outs)
 
-    for i, var in enumerate(env.variables):
+    for i, var in enumerate(variables_of(env)):
         var.name = var.name or "var_%d"%i
 
     return env
