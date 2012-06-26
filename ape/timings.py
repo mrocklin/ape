@@ -54,7 +54,6 @@ def load_dict(filename):
     d = ast.literal_eval(d_string)
     return d
 
-
 def make_runtime_function(machine_time_dict):
     """
     Create a callable function from a dict containing runtimes for machines
@@ -79,7 +78,7 @@ def make_runtime_function(machine_time_dict):
     # Break out the ids to a flat dict
     d = {id:machine_time_dict[ids] for ids in machine_time_dict for id in ids}
 
-    def runtime_fn(id, apply):
+    def runtime_fn(apply, id):
         """ Given machine id and an apply node provides the expected runtime"""
         return d[id][str(apply)]
 

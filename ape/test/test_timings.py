@@ -17,8 +17,8 @@ def test_make_runtime_function():
     data = {('A', 'B'): {'gemm':1, 'sum':2},
             ('C',)    : {'gemm':3, 'sum':1}}
     fn = make_runtime_function(data)
-    assert fn('A', 'gemm') == 1
-    assert fn('C', 'sum') == 1
+    assert fn('gemm', 'A') == 1
+    assert fn('sum', 'C') == 1
 
 def test_save_dict():
     data = {('A', 'B'): {'gemm':1, 'sum':2},
