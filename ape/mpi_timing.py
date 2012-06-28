@@ -33,7 +33,18 @@ if __name__ == '__main__':
 else:
     import ast
     import os
+    import numpy as np
     def comm_times(ns, send_host, recv_host):
+        """ Computes transit times between two hosts
+
+        Returns a list of [(nbytes, transit-time)]
+
+        >>> comm_times([10, 100, 1000], 'sender.univ.edu', 'receiver.univ.edu')
+        [(4, 0.00013303756713867188),
+         (40, 0.00015091896057128906),
+         (400, 0.0002040863037109375),
+         (4000, 0.0005209445953369141)]
+        """
 
         hosts = (send_host, recv_host)
         file = open('_machinefile.txt', 'w')
@@ -43,3 +54,23 @@ else:
 
         values = ast.literal_eval(s.read())
         return values
+
+    def model(ns, send_host, recv_host):
+        """ Computes the latency and inverse bandwidth between two hosts
+
+        returns latency (intercept) and inverse bandwidth (slope) of the values
+        returned by comm_times
+
+        >>> model([10, 100, 1000], 'sender.univ.edu', 'receiver.univ.edu')
+        (0.00017246120293471764, 8.8186875357188027e-08)
+
+        time = .000172 + 8.818e-8*nbytes
+
+        TODO - this function minimizes squared error. The larger values will
+        dominate. Should weight nbytes = 10 similarly to nbytes = 1e9
+        """
+
+        values = comm_times(ns, send_host, recv_host)
+        nbytes, times = zip(*values)
+        slope, intercept = np.polyfit(nbytes, times, 1)
+        return intercept, slope
