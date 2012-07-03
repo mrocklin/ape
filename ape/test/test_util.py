@@ -1,4 +1,4 @@
-from ape.util import iterable, chain
+from ape.util import iterable, chain, load_dict, save_dict
 
 def test_iterable():
     assert iterable([1,2])
@@ -10,3 +10,11 @@ def test_chain():
     h = lambda x,y: (x+y)
     k = chain(g, h, f)
     assert k(2) == 36
+
+def test_save_dict():
+    data = {('A', 'B'): {'gemm':1, 'sum':2},
+            ('C',)    : {'gemm':3, 'sum':1}}
+    save_dict('_temp.tmp', data)
+    data2 = load_dict('_temp.tmp')
+    assert data == data2
+

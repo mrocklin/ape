@@ -1,5 +1,5 @@
 from ape.timings import (make_runtime_fn, compute_runtimes,
-        make_runtime_function, save_dict, load_dict)
+        make_runtime_function)
 import theano
 
 def test_make_runtime_fn():
@@ -19,13 +19,6 @@ def test_make_runtime_function():
     fn = make_runtime_function(data)
     assert fn('gemm', 'A') == 1
     assert fn('sum', 'C') == 1
-
-def test_save_dict():
-    data = {('A', 'B'): {'gemm':1, 'sum':2},
-            ('C',)    : {'gemm':3, 'sum':1}}
-    save_dict('_temp.tmp', data)
-    data2 = load_dict('_temp.tmp')
-    assert data == data2
 
 def test_compute_runtimes():
     x = theano.tensor.matrix('x')

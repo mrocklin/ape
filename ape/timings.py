@@ -1,5 +1,8 @@
 import theano
 import numpy as np
+from ape.util import chain
+from theano_util import bytes_of_dtype, prod
+import ape.mpi_timings
 
 def compute_runtimes(inputs, outputs, input_shapes, niter=10):
     """
@@ -42,17 +45,6 @@ def compute_runtimes(inputs, outputs, input_shapes, niter=10):
     avg_time = {str(an):stats[an]/niter for an in stats}
     return avg_time
 
-def save_dict(filename, d):
-    file = open(filename,'w')
-    file.write(str(d))
-    file.close()
-def load_dict(filename):
-    import ast
-    file = open(filename)
-    d_string = file.read()
-    file.close()
-    d = ast.literal_eval(d_string)
-    return d
 
 def make_runtime_function(machine_time_dict):
     """
@@ -129,3 +121,32 @@ def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
         return avg_time[str(an)]
 
     return runtime_of
+
+compute_commtimes = chain( mpi_timings.comm_times_group,
+                           mpi_timings.model_dict_group)
+
+def make_commtime_function(cdict, input_shapes):
+    """ Create callable function from a dict of intercept/slopes, known shapes
+
+    inputs
+    ------
+    cdict - dictionary mapping {sender, receiver : intercept, slope}
+    input_shapes - dictionary from input variables to shapes :: {Tensor : shape}
+
+    outputs
+    -------
+    commtime - function :: ApplyNode, Sender, Receiver -> time (float)
+    """
+
+    bytes_fn = mpi_timings.function_from_group_dict(cdict)
+
+    def bytes(var):
+        """ Compute the bytes that a theano variable holds """
+        shape = known_shapes[var]
+        return prod(shape)*bytes_of_dtype(var.dtype)
+
+    def commtime(an, sender, receiver):
+        """ Returns the communication time to transmit the outputs of an """
+        return sum(map(bytes, an.outputs))
+
+    return commtime
