@@ -1,6 +1,7 @@
-from env_manip import env_with_names, shape_of_variables
-from schedule import gen_code
-from theano_to_milp import compute_schedule, make_ilp
+from ape.env_manip import env_with_names, shape_of_variables
+from ape.schedule import gen_code
+from ape.theano_to_milp import compute_schedule, make_ilp
+from ape import ape_dir
 
 def compile(env, machine_ids, compute_cost, comm_cost, ability,
         input_shapes, max_makespan):
@@ -37,6 +38,6 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     specifics = gen_code(sched, 'env.dat', shapes)
 
     # Read code template from template.py
-    f = open('template.py'); code = f.read(); f.close()
+    f = open(ape_dir+'ape/template.py'); code = f.read(); f.close()
 
     return code%specifics

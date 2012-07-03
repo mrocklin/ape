@@ -14,5 +14,5 @@ times = {('ankaa.cs.uchicago.edu','mimosa.cs.uchicago.edu'):an_times}
 save_dict('compute_times.dat', times)
 
 comm_dict = compute_commtimes([10,100,1000,2000]*5,
-            {'ankaa.cs.uchicago.edu', 'mimosa.cs.uchicago.edu'}))
+            {'ankaa.cs.uchicago.edu', 'mimosa.cs.uchicago.edu'})
 save_dict('comm_times.dat', comm_dict)
