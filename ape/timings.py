@@ -1,8 +1,8 @@
 import theano
 import numpy as np
-from ape.util import chain
-from theano_util import bytes_of_dtype, prod
-import ape.mpi_timings
+from ape.util import chain, prod
+from ape.theano_util import bytes_of_dtype
+import ape.mpi_timing as mpi_timing
 
 def compute_runtimes(inputs, outputs, input_shapes, niter=10):
     """
@@ -122,10 +122,10 @@ def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
 
     return runtime_of
 
-compute_commtimes = chain( mpi_timings.comm_times_group,
-                           mpi_timings.model_dict_group)
+compute_commtimes = chain( mpi_timing.comm_times_group,
+                           mpi_timing.model_dict_group)
 
-def make_commtime_function(cdict, input_shapes):
+def make_commtime_function(cdict, known_shapes):
     """ Create callable function from a dict of intercept/slopes, known shapes
 
     inputs
@@ -138,7 +138,7 @@ def make_commtime_function(cdict, input_shapes):
     commtime - function :: ApplyNode, Sender, Receiver -> time (float)
     """
 
-    bytes_fn = mpi_timings.function_from_group_dict(cdict)
+    bytes_fn = mpi_timing.function_from_group_dict(cdict)
 
     def bytes(var):
         """ Compute the bytes that a theano variable holds """
@@ -147,6 +147,8 @@ def make_commtime_function(cdict, input_shapes):
 
     def commtime(an, sender, receiver):
         """ Returns the communication time to transmit the outputs of an """
-        return sum(map(bytes, an.outputs))
+        nbytes = sum(map(bytes, an.outputs))
+        intercept, slope = cdict[sender, receiver]
+        return slope*nbytes + intercept
 
     return commtime

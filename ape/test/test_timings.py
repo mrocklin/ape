@@ -1,5 +1,5 @@
 from ape.timings import (make_runtime_fn, compute_runtimes,
-        make_runtime_function)
+        make_runtime_function, make_commtime_function)
 import theano
 
 def test_make_runtime_fn():
@@ -29,3 +29,27 @@ def test_compute_runtimes():
     assert all(isinstance(key, str)     for key in times)
     assert all(isinstance(val, float)   for val in times.itervalues())
     assert 'dot(x, x)' in times
+
+def test_make_commtime_function():
+    data = {('a','b'): (1, 1) , ('b','a'): (0, 10)}
+
+    x = theano.tensor.matrix('x')
+    y = theano.tensor.matrix('y')
+    z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
+
+    env = theano.Env([x,y], [z])
+
+    dot = env.toposort()[2]
+
+    from ape.env_manip import shape_of_variables
+    known_shapes = shape_of_variables(env, {x:(100,100), y:(100,100)})
+
+    commtime = make_commtime_function(data, known_shapes)
+
+    assert commtime(dot, 'a', 'b') == 4*100*100 * 1  + 1
+    assert commtime(dot, 'b', 'a') == 4*100*100 * 10 + 0
+
+
+
+
+
