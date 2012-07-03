@@ -11,7 +11,14 @@ def chain(*fns):
     def f(*args):
         for sub_fn in fns:
             if not iterable(args): args = [args]
-            args = sub_fn(*args)
+            try:
+                if sub_fn.func_code.co_argcount == 1 and len(args)>1:
+                    args = sub_fn(args) # function may want an iterable
+                else:
+                    args = sub_fn(*args) # expand results
+            except AttributeError: # some builtins don't have func_code
+                try:    args = sub_fn(*args) # just try blindly
+                except: args = sub_fn(args)
         return args
     return f
 

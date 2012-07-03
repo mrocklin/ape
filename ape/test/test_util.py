@@ -11,6 +11,14 @@ def test_chain():
     k = chain(g, h, f)
     assert k(2) == 36
 
+def test_chain_iterable_inputs():
+    f = lambda x : (x, x+2)
+    g = lambda L : sum(L)
+    h = chain(f, g)
+    k = chain(f, sum)
+    assert h(2) == 6
+    assert k(2) == 6
+
 def test_save_dict():
     data = {('A', 'B'): {'gemm':1, 'sum':2},
             ('C',)    : {'gemm':3, 'sum':1}}
