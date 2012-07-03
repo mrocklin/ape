@@ -1,6 +1,9 @@
 import ast
 import os
 import numpy as np
+
+ape_dir = '/home/mrocklin/workspace/ape/'
+
 def comm_times_single(ns, send_host, recv_host):
     """ Computes transit times between two hosts
     Returns a list of [(nbytes, transit-time)]
@@ -15,7 +18,7 @@ def comm_times_single(ns, send_host, recv_host):
     file = open('_machinefile.txt', 'w')
     file.write('\n'.join(hosts))
     file.close()
-    s = os.popen('''mpiexec -np 2 -machinefile _machinefile.txt python mpi_timing_single.py "%s" %s %s'''%(ns, hosts[0], hosts[1]))
+    s = os.popen('''mpiexec -np 2 -machinefile _machinefile.txt python %sape/mpi_timing_single.py "%s" %s %s'''%(ape_dir, ns, hosts[0], hosts[1]))
 
     values = ast.literal_eval(s.read())
     return values
@@ -30,7 +33,7 @@ def comm_times_group(ns, hosts):
     file = open('_machinefile.txt', 'w')
     file.write('\n'.join(hosts))
     file.close()
-    s = os.popen('''mpiexec -np %d -machinefile _machinefile.txt python mpi_timing_group.py "%s" %s'''%(len(hosts), ns, ' '.join(hosts))).read()
+    s = os.popen('''mpiexec -np %d -machinefile _machinefile.txt python %sape/mpi_timing_group.py "%s" %s'''%(len(hosts), ape_dir, ns, ' '.join(hosts))).read()
 
     values = ast.literal_eval(s)
     return values
@@ -65,6 +68,21 @@ def model_dict_group(values):
              for sender in hosts
              for receiver in hosts
              if sender != receiver}
+
+def function_from_group_dict(d):
+    """ Create function to compute communication times given int/slope data
+
+    inputs -- Dictionary mapping :: {sender, receiver : intercept, slope}
+    outputs -- Callable function :: nbytes, sender, receiver -> time (float)
+
+    See also
+        model_dict_group (produces input)
+    """
+    def commtime(nbytes, sender, receiver):
+        """ Approximates communication time between sender and receiver """
+        intercept, slope = d[sender, receiver]
+        return nbytes*slope + intercept
+    return commtime
 
 def model(ns, send_host, recv_host):
     """ Computes the latency and inverse bandwidth between two hosts
