@@ -30,9 +30,9 @@ if __name__ == '__main__':
                     send(x, n, receiver)
 
     comm.barrier()
-    # Gather results back to head node
     results_list = comm.gather(results)
-    results = [res for results in results_list for res in results
-                                                if results] # flatten
+    # Gather results back to head node
     if rank == 0:
+        results = [res for results in results_list for res in results
+                                                 if results] # flatten
         stdout.write("[%s]\n"%(',\n'.join(map(str, results))))
