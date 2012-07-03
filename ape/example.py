@@ -2,7 +2,8 @@ import theano
 from theano_to_milp import (make_ilp, dummy_compute_cost, dummy_comm_cost,
         dummy_ability, compute_schedule)
 from master import compile
-from timings import (load_dict, make_runtime_function, make_commtime_function, save_dict)
+from ape.timings import (make_runtime_function, make_commtime_function)
+from ape.util import save_dict
 from env_manip import variables_with_names
 
 x = theano.tensor.matrix('x')

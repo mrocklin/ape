@@ -1,7 +1,7 @@
 import theano
-from timings import compute_runtimes, compute_commtimes
+from ape.timings import compute_runtimes, compute_commtimes
 from env_manip import variables_with_names
-from util import save_dict
+from ape.util import save_dict
 
 x = theano.tensor.matrix('x')
 y = theano.tensor.matrix('y')
