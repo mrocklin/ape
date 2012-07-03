@@ -31,9 +31,13 @@ def iterable(x):
 
 prod = lambda L : reduce(lambda a,b:a*b, L, 1)
 
-def save_dict(filename, d):
+def save_dict(filename, d, pretty=True):
     file = open(filename,'w')
-    file.write(str(d))
+    if pretty:
+        file.write("{%s}"%(',\n'.join("%s: %s"%(key, value)
+                                        for key,value in d.items())))
+    else:
+        file.write(str(d))
     file.close()
 
 def load_dict(filename):
