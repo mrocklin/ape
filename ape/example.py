@@ -1,10 +1,11 @@
 import theano
+from theano import shape_of_variables
 from theano_to_milp import (make_ilp, dummy_compute_cost, dummy_comm_cost,
         dummy_ability, compute_schedule)
 from master import compile
 from ape.timings import (make_runtime_function, make_commtime_function)
 from ape.util import load_dict
-from env_manip import variables_with_names, shape_of_variables
+from env_manip import variables_with_names
 
 x = theano.tensor.matrix('x')
 y = theano.tensor.matrix('y')
