@@ -36,8 +36,8 @@ def compute_runtimes(inputs, outputs, input_shapes, niter=10):
             linker=theano.gof.OpWiseCLinker())
     f = theano.function(inputs, outputs, mode=profmode)
 
-    numeric_inputs = [np.empty(input_shapes[var], dtype=var.dtype)
-                                                   for var in inputs]
+    numeric_inputs = [np.random.random(input_shapes[var]).astype(var.dtype)
+                                                          for var in inputs]
     for i in range(niter):  f(*numeric_inputs)
 
     stats = profmode.profile_stats[f].apply_time
