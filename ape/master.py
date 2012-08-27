@@ -1,4 +1,5 @@
-from ape.env_manip import env_with_names, shape_of_variables
+from theano.tensor.utils import shape_of_variables
+from ape.env_manip import env_with_names
 from ape.schedule import gen_code
 from ape.theano_to_milp import compute_schedule, make_ilp
 from ape import ape_dir

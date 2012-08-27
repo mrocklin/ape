@@ -1,7 +1,7 @@
 from ape.theano_to_milp import (make_ilp, dummy_compute_cost, dummy_comm_cost,
         dummy_ability, compute_schedule)
-from ape.env_manip import (env_with_names, unpack, unpack_many,
-        shape_of_variables)
+from ape.env_manip import env_with_names, unpack, unpack_many
+from theano.tensor.utils import  shape_of_variables
 from ape.schedule import gen_code, machine_dict_to_code, is_output
 
 import theano

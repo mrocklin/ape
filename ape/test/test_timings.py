@@ -41,7 +41,7 @@ def test_make_commtime_function():
 
     dot = env.toposort()[2]
 
-    from ape.env_manip import shape_of_variables
+    from theano.tensor.utils import shape_of_variables
     known_shapes = shape_of_variables(env, {x:(100,100), y:(100,100)})
 
     commtime = make_commtime_function(data, known_shapes)

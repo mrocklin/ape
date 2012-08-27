@@ -89,48 +89,6 @@ def unpack_many(target_file):
            return envs
     assert False
 
-def shape_of_variables(env, input_shapes):
-    """
-    Compute the numeric shape of all intermediate variables given input shapes
-
-    Inputs:
-        env - the theano.Env in question
-        input_shapes - a dict mapping input to shape
-
-    Outputs:
-        shapes - a dict mapping variable to shape
-
-    WARNING : This modifies the env! Not pure!
-
-    >>> import theano
-    >>> x = theano.tensor.matrix('x')
-    >>> y = x[512:]; y.name = 'y'
-    >>> env = theano.Env([x], [y])
-    >>> shape_of_variables(env, {x: (1024, 1024)})
-    {y: (512, 1024), x: (1024, 1024)}
-    """
-
-    if not hasattr(env, 'shape_feature'):
-        env.attach_feature(theano.tensor.opt.ShapeFeature())
-
-    input_dims  = [dimension for inp in env.inputs
-                             for dimension in env.shape_feature.shape_of[inp]]
-
-    output_dims = [dimension for shape in env.shape_feature.shape_of.values()
-                             for dimension in shape]
-
-    compute_shapes = theano.function(input_dims, output_dims)
-
-    numeric_input_dims  = [dim for inp in env.inputs
-                               for dim in input_shapes[inp]]
-    numeric_output_dims = compute_shapes(*numeric_input_dims)
-
-    sym_to_num_dict = dict(zip(output_dims, numeric_output_dims))
-
-    return {var: tuple(sym_to_num_dict[sym]
-                             for sym in env.shape_feature.shape_of[var])
-                             for var in env.shape_feature.shape_of}
-
 def precedes(a, b):
     """ does a directly precede b ? """
     return len(set(a.outputs).intersection(b.inputs)) != 0
