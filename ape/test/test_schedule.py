@@ -9,7 +9,7 @@ import theano
 def test_gen_code_simple():
     x = theano.tensor.matrix('x')
     y = x+x*x
-    env = theano.Env([x], [y])
+    env = theano.FunctionGraph([x], [y])
     env = env_with_names(env)
 
     machine_ids = ["ankaa", "mimosa"]
@@ -19,7 +19,7 @@ def test_gen_code_complex():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
-    env = theano.Env([x, y], [z])
+    env = theano.FunctionGraph([x, y], [z])
     env = env_with_names(env)
     machine_ids = ["ankaa", "mimosa"]
 
@@ -38,7 +38,7 @@ def _test_gen_code(env, machine_ids):
     env_filename = d['env_filename']
     assert env_filename == 'envs.dat'
     envs = unpack_many(env_filename)
-    assert all(type(x) == theano.Env for x in envs)
+    assert all(type(x) == theano.FunctionGraph for x in envs)
 
     varinit = d['variable_initialization']
     print [var.name for var in env.variables]

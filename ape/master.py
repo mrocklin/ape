@@ -9,7 +9,7 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
 
     inputs
     ------
-    env :: theano.Env object - represents computational graph
+    env :: theano.FunctionGraph object - represents computational graph
     machine_ids  :: [machine identifier] (iterable)
     compute_time :: theano.Apply, id     -> time (float)
     comm_time    :: theano.Apply, id, id -> time (float)
@@ -19,7 +19,7 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
 
     returns code to optimally compute env on the given machines
     """
-    # Massage input Env
+    # Massage input FunctionGraph
     env = env_with_names(env)
 
     # TODO - this should be put somewhere else, perhaps in shape_of_variables?

@@ -24,7 +24,7 @@ def compute_runtimes(inputs, outputs, input_shapes, niter=10):
     >>> x = theano.tensor.matrix('x')
     >>> y = x+x*x
     >>> times = compute_runtimes([x], [y], {x:(1000,1000)})
-    >>> env = theano.Env([x], [y])
+    >>> env = theano.FunctionGraph([x], [y])
     >>> an = env.toposort()[0]
     >>> times[str(an)]
     .0024525
@@ -99,7 +99,7 @@ def make_runtime_fn(inputs, outputs, input_shapes, valid_machine, niter=10):
     >>> y = x+x*x
     >>> valid_machine = lambda id : id in {'ankaa', 'mimosa'}
     >>> runtime = make_runtime_fn([x], [y], {x:(1000,1000)}, valid_machine)
-    >>> env = theano.Env([x], [y])
+    >>> env = theano.FunctionGraph([x], [y])
     >>> an = env.toposort()[0]
     >>> runtime(an, 'ankaa')
     .0024525

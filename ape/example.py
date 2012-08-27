@@ -12,7 +12,7 @@ y = theano.tensor.matrix('y')
 z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
 variables_with_names([x,y], [z]) # give names to all variables between x,y and z
 
-env = theano.Env([x, y], [z])
+env = theano.FunctionGraph([x, y], [z])
 input_shapes = {x:(1000,1000), y:(1000,1000)}
 all_shapes = shape_of_variables(env, input_shapes)
 

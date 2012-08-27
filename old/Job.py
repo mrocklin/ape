@@ -129,13 +129,13 @@ class Job(Node):
     def _env(self):
         inputs = [inp.clone() for inp in self.apply.inputs]
         output = self.apply.op(inputs)
-        env = theano.Env(inputs, [output])
+        env = theano.FunctionGraph(inputs, [output])
         return env
 
     def function(self, additional_tags=None, gpu=False):
         # inputs = [inp.clone() for inp in self.apply.inputs]
         # output = self.apply.op(inputs)
-        # env = theano.Env(inputs, [output])
+        # env = theano.FunctionGraph(inputs, [output])
         mode = theano.compile.mode.get_default_mode()
 
         inputs = self.apply.inputs

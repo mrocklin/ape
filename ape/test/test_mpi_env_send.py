@@ -21,7 +21,7 @@ if __name__ == '__main__':
     if rank == 0:
         x = T.matrix('x')
         y = x+x*x
-        env = theano.Env([x], [y])
+        env = theano.FunctionGraph([x], [y])
         s = pack(env)
         comm.send(s, dest=1, tag = 1234)
 

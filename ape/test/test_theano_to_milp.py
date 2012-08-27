@@ -7,7 +7,7 @@ def test_make_ilp():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
-    env = theano.Env([x, y], [z])
+    env = theano.FunctionGraph([x, y], [z])
     machine_ids = ["ankaa", "arroyitos"]
 
     prob, X, S, Cmax = make_ilp(env, machine_ids, dummy_compute_cost,
@@ -20,7 +20,7 @@ def test_compute_schedule():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
-    env = theano.Env([x, y], [z])
+    env = theano.FunctionGraph([x, y], [z])
     machine_ids = ["ankaa", "arroyitos"]
 
     sched = compute_schedule(*make_ilp(env, machine_ids, dummy_compute_cost,

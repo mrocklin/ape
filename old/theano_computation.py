@@ -273,7 +273,7 @@ def all_jobs(job):
 
 def apply_clone(ap):
     """
-    Takes in an apply node in some larger Env context.
+    Takes in an apply node in some larger FunctionGraph context.
     Returns the same apply/variables outside of the context
     """
     inputs = [inp.clone() for inp in ap.inputs]

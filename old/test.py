@@ -33,7 +33,7 @@ g = theano.function(As, C)
 
 someAs = [numpy.eye(3, dtype=numpy.float32) for i in range(5)]
 
-myenv = theano.Env(As, [C])
+myenv = theano.FunctionGraph(As, [C])
 myoptimizer = f.maker.mode.optimizer
 
 def show_optimization_path(env, filename='opt_path.txt', optimizer=myoptimizer):
@@ -53,7 +53,7 @@ def show_optimization_path(env, filename='opt_path.txt', optimizer=myoptimizer):
 # aps = list(all_applys([C]))
 # d[aps[i].inputs[j]]
 
-env = theano.Env([x], [z])
+env = theano.FunctionGraph([x], [z])
 an = env.outputs[0].owner
 job = Job(an)
 

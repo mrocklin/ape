@@ -8,7 +8,7 @@ def test_make_runtime_fn():
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
     runtime_fn = make_runtime_fn([x,y], [z], {x:(1000,1000), y:(1000,1000)},
             lambda id: True)
-    env = theano.Env([x, y], [z])
+    env = theano.FunctionGraph([x, y], [z])
 
     assert all(isinstance(runtime_fn(an, 'ankaa'), float)
                                                 for an in env.toposort())
@@ -37,7 +37,7 @@ def test_make_commtime_function():
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
 
-    env = theano.Env([x,y], [z])
+    env = theano.FunctionGraph([x,y], [z])
 
     dot = env.toposort()[2]
 

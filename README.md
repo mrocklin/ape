@@ -63,7 +63,8 @@ What we produce
 ===============
 
 This project takes 
- * Theano input code like the example above (specifically we want a theano.Env)
+ * Theano input code like the example above (specifically we want a theano.   
+   FunctionGraph)
  * Functions to estimate the cost of running and communicating operations on
    various machines in your network
  * Sizes of all inputs in your code

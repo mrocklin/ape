@@ -4,7 +4,7 @@ import cPickle
 
 def math_optimize(env):
     """
-    Creates a new Env that has been optimized using no gpu or inplace operations
+    Creates new FunctionGraph optimized using no gpu or inplace operations
 
     Does not overwrite input
 
@@ -19,10 +19,10 @@ def math_optimize(env):
 
 def pack(env, file=None):
     """
-    Pickles a theano.Env into a string
+    Pickles a theano.FunctionGraph into a string
 
     Inputs
-    env - a theano.Env object
+    env - a theano.FunctionGraph object
     file - a file into which we should dump the result
          - if left empty we return a string
 
@@ -31,7 +31,7 @@ def pack(env, file=None):
     >>> from ape.env_manip import pack, unpack
     >>> x = theano.tensor.matrix('x')
     >>> y = x+x
-    >>> env = theano.Env([x], [y])
+    >>> env = theano.FunctionGraph([x], [y])
     >>> type(pack(env))
     str
     >>> str(unpack(pack(env))) == str(env)
@@ -58,7 +58,7 @@ def pack_many(envs, target_file):
 
 def unpack(source):
     """
-    Unpickle a packed string into an Env
+    Unpickle a packed string into a FunctionGraph
 
     source can be a
         string
@@ -75,7 +75,7 @@ def unpack(source):
     elif isinstance(source, file):
         ins, outs = cPickle.load(source)
 
-    env = theano.Env(ins, outs)
+    env = theano.FunctionGraph(ins, outs)
     return env
 def unpack_many(target_file):
     """ Pack many envs into a file """
@@ -111,7 +111,7 @@ def shape_of_variables(env, input_shapes):
     """
 
     if not hasattr(env, 'shape_feature'):
-        env.extend(theano.tensor.opt.ShapeFeature())
+        env.attach_feature(theano.tensor.opt.ShapeFeature())
 
     input_dims  = [dimension for inp in env.inputs
                              for dimension in env.shape_feature.shape_of[inp]]
@@ -136,7 +136,7 @@ def precedes(a, b):
     return len(set(a.outputs).intersection(b.inputs)) != 0
 
 def variables_of(env):
-    """ Returns the variables of an Env in a more predictable manner
+    """ Returns the variables of a FunctionGraph in a more predictable manner
 
     This is an alternative to env.variables() which produces a set """
     variables = [var for node in env.toposort()
@@ -162,7 +162,7 @@ def variables_with_names(inputs, outputs):
 
 def env_with_names(env):
     ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
-    env = theano.Env(ins, outs)
+    env = theano.FunctionGraph(ins, outs)
 
     for i, var in enumerate(variables_of(env)):
         var.name = var.name or "var_%d"%i
