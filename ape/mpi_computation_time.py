@@ -1,6 +1,7 @@
-from env_manip import pack
+from ape.env_manip import pack, env_with_names
 from ape import ape_dir
 import os
+import ast
 
 def compute_time_on_machine(fgraph, input_shapes, machine, niter):
     """ Computes computation time of funciton graph on a remote machine
@@ -21,6 +22,8 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
     file.write(machine)
     file.close()
 
+    fgraph = env_with_names(fgraph)
+
     fgraphstr = pack(fgraph)
 
     # stringify the keys
@@ -34,5 +37,5 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
 
     # Receive the output from the compute node
     message = stdout.read()
-    duration = float(message)
-    return duration / niter
+    times = ast.literal_eval(message)
+    return  times

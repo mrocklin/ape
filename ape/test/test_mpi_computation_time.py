@@ -1,4 +1,5 @@
 from ape.mpi_computation_time import compute_time_on_machine
+from ape.env_manip import fgraph_iter
 import theano
 
 def test_compute_time_on_machine():
@@ -10,5 +11,7 @@ def test_compute_time_on_machine():
     niter = 3
     machine = 'ankaa.cs.uchicago.edu'
 
-    time = compute_time_on_machine(fgraph, input_shapes, machine, niter)
-    assert isinstance(time, float)
+    times = compute_time_on_machine(fgraph, input_shapes, machine, niter)
+    assert isinstance(times, dict)
+    assert all(str(s) in times for s in map(str, fgraph_iter(fgraph)))
+    assert all(isinstance(val, float) for val in times.values())
