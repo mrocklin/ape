@@ -65,3 +65,13 @@ def test_env_with_names():
     env = env_with_names(env)
     assert set(("x", "var_0", "var_1", "var_2")).issuperset(
             {var.name for var in env.variables})
+
+def test_fgraph_iter():
+    x = T.matrix('x')
+    y = x+x*x
+    fgraph = theano.FunctionGraph([x], [y])
+    fgraphs = fgraph_iter(fgraph)
+    assert all(isinstance(fg, theano.FunctionGraph) for fg in fgraphs)
+    assert all(var.name in map(str, fgraph.variables) for fg in fgraphs
+                                                      for var in fg.variables)
+
