@@ -13,12 +13,14 @@ A = dot(Sigma, H.T)
 B = R + dot(H, dot(Sigma, H.T))
 
 new_mu    = mu + dot(A, linalg.solve(B, dot(H, mu) - data))
+new_mu.name = "updated_mu"
 new_Sigma = Sigma - dot(dot(A, linalg.solve(B, H)), Sigma)
+new_Sigma.name = "updated_Sigma"
 
 inputs = [mu, Sigma, H, R, data]
 outputs = [new_mu, new_Sigma]
 
-n = 1000
+n = 2000
 input_shapes = {mu:     (n, 1),
                 Sigma:  (n, n),
                 H:      (n, n),
