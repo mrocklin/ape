@@ -7,7 +7,9 @@ from ape.timings import (make_runtime_function, make_commtime_function)
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
 
-from kalman import inputs, outputs, input_shapes, machines
+from maclab_pair import machine_groups
+from kalman import inputs, outputs, input_shapes
+machines = sum(machine_groups, ())
 
 variables_with_names(inputs, outputs) # give identifiers to all variables
 env = FunctionGraph(inputs, outputs)
@@ -21,7 +23,7 @@ all_shapes = shape_of_variables(env, input_shapes)
 
 # Compute Cost
 compute_times = compute_runtimes(inputs, outputs, input_shapes)
-compute_times = {machines: compute_times}
+compute_times = {machine_groups[0]: compute_times}
 save_dict('compute_times.dat', compute_times)
 # compute_times = load_dict('compute_times.dat')
 compute_cost = make_runtime_function(compute_times)

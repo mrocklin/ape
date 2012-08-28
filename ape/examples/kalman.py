@@ -26,5 +26,3 @@ input_shapes = {mu:     (n, 1),
                 H:      (n, n),
                 R:      (n, n),
                 data:   (n, 1)}
-
-machines = ('ankaa.cs.uchicago.edu','mimosa.cs.uchicago.edu')
