@@ -1,7 +1,10 @@
-from ape.env_manip import pack, env_with_names
+from ape.env_manip import pack_many, env_with_names
 from ape import ape_dir
+from ape.env_manip import fgraph_iter
+from theano.tensor.utils import shape_of_variables
 import os
 import ast
+from ape.util import dearrayify
 
 def compute_time_on_machine(fgraph, input_shapes, machine, niter):
     """ Computes computation time of funciton graph on a remote machine
@@ -14,28 +17,36 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
         machine - A machine on which to run the graph
         niter - The number of times to run the computation in sampling
 
+    outputs:
+        A dict mapping apply node to average runtime
+
     >>> compute_time_on_machine(fgraph, {x: (10, 10)}, 'receiver.univ.edu', 10)
-    .0133
+    {dot(x, x+y): 0.133, Add(x, y): .0012}
     """
 
     file = open('_machinefile.txt', 'w')
     file.write(machine)
     file.close()
 
-    fgraph = env_with_names(fgraph)
-
-    fgraphstr = pack(fgraph)
-
     # stringify the keys
-    input_shapes_str = str({str(k):v for k,v in input_shapes.items()})
 
-    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %sape/mpi_computation_run.py "%s" %d'''%(ape_dir, input_shapes_str, niter))
+    if len(set(map(str, fgraph.variables))) != len(fgraph.variables):
+        raise ValueError("Not all variables have unique names"
+                         "Look into ape.env_manip.variables_with_names")
 
-    # Send the fgraph as a string (it will be unpacked on the other end)
-    stdin.write(fgraphstr)
-    stdin.close()
+    known_shapes = dearrayify(shape_of_variables(fgraph, input_shapes))
+
+    known_shapes_str = str({str(k):v for k,v in known_shapes.items()})
+
+    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %sape/mpi_computation_run.py "%s" %d'''%(ape_dir, known_shapes_str, niter))
+
+    # Send the fgraphs as strings (they will be unpacked on the other end)
+
+    fgraphs = fgraph_iter(fgraph)
+    pack_many(fgraphs, stdin) # This writes to stdin
+    stdin.close() # send termination signal
 
     # Receive the output from the compute node
     message = stdout.read()
     times = ast.literal_eval(message)
-    return  times
+    return  dict(zip(fgraph.nodes, times))
