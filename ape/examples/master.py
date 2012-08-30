@@ -12,14 +12,14 @@ from kalman import inputs, outputs, input_shapes
 machines = sum(machine_groups, ())
 
 variables_with_names(inputs, outputs) # give identifiers to all variables
-env = FunctionGraph(inputs, outputs)
-env2 = math_optimize(env)
-env2_var_dict = {str(var): var for var in env.variables}
-input_shapes2 = {env2_var_dict[str(var)]:input_shapes[var]
+fgraph = FunctionGraph(inputs, outputs)
+fgraph2 = math_optimize(fgraph)
+fgraph2_var_dict = {str(var): var for var in fgraph.variables}
+input_shapes2 = {fgraph2_var_dict[str(var)]:input_shapes[var]
                  for var in input_shapes}
 
 
-all_shapes = shape_of_variables(env, input_shapes)
+all_shapes = shape_of_variables(fgraph, input_shapes)
 
 # Compute Cost
 compute_times = compute_runtimes(inputs, outputs, input_shapes)
@@ -36,7 +36,7 @@ save_dict('comm_times.dat', comm_dict)
 comm_cost = make_commtime_function(comm_dict, all_shapes)
 
 
-code = compile(env, machines, compute_cost, comm_cost,
+code = compile(fgraph, machines, compute_cost, comm_cost,
         dummy_ability, input_shapes, 100)
 
 f = open('results.py', 'w'); f.write(code); f.close()
