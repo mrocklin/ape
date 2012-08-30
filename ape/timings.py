@@ -3,6 +3,11 @@ import numpy as np
 from ape.util import chain, prod
 from ape.theano_util import bytes_of_dtype
 import ape.mpi_timing as mpi_timing
+from ape.mpi_computation_time import compute_time_on_machine
+
+def compute_runtime_dict(fgraph, input_shapes, niter, machine_groups):
+    return {mg: compute_time_on_machine(fgraph, input_shapes, mg[0], niter)
+            for mg in machine_groups}
 
 def compute_runtimes(inputs, outputs, input_shapes, niter=10):
     """

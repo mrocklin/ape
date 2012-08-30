@@ -14,5 +14,5 @@ def test_compute_time_on_machine():
 
     times = compute_time_on_machine(fgraph, input_shapes, machine, niter)
     assert isinstance(times, dict)
-    assert set(fgraph.nodes) == set(times.keys())
+    assert set(map(str, fgraph.nodes)) == set(times.keys())
     assert all(isinstance(val, float) for val in times.values())

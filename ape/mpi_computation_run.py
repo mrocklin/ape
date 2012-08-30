@@ -26,11 +26,10 @@ if __name__ == '__main__':
     for fgraph in unpack_many(stdin):
         debugprint("\n%s\n"%str(fgraph))
 
-
         inputs = filter(lambda x: not isinstance(x, theano.Constant),
                         fgraph.inputs)
         # Compile and instantiate
-        num_inputs = [np.random.rand(*known_shapes[str(var)]).astype(var.dtype)
+        num_inputs = [np.asarray(np.random.rand(*known_shapes[str(var)])).astype(var.dtype)
                              for var in inputs]
 
         f = theano.function(inputs, fgraph.outputs)
