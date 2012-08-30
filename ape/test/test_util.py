@@ -1,4 +1,4 @@
-from ape.util import iterable, chain, load_dict, save_dict
+from ape.util import iterable, chain, load_dict, save_dict, dearrayify
 
 def test_iterable():
     assert iterable([1,2])
@@ -26,3 +26,11 @@ def test_save_dict():
     data2 = load_dict('_temp.tmp')
     assert data == data2
 
+def test_dearrayify():
+    from numpy import array
+    assert dearrayify(3) == 3
+    assert dearrayify(array(3)) == 3
+    assert dearrayify((3, array(4))) == (3, 4)
+    assert dearrayify((3, 4)) == (3, 4)
+    assert dearrayify({'x': (array(1000), array(1000)), 'y': (), 'z': 5}) == \
+            {'x': (1000, 1000), 'y': (), 'z': 5}

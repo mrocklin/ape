@@ -43,3 +43,14 @@ def save_dict(filename, d, pretty=True):
 def load_dict(filename):
     file = open(filename); d_string = file.read(); file.close()
     return ast.literal_eval(d_string)
+
+def dearrayify(x):
+    from numpy import ndarray
+    if isinstance(x, ndarray) and x.shape == ():
+        return x.sum()
+    if isinstance(x, tuple):
+        return tuple(map(dearrayify, x))
+    if isinstance(x, dict):
+        return {k:dearrayify(val) for k, val in x.items()}
+    return x
+
