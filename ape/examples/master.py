@@ -7,7 +7,7 @@ from ape.timings import (make_runtime_function, make_commtime_function)
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
 
-from maclab_pair import machine_groups
+from nfs_triple import machine_groups
 from kalman import inputs, outputs, input_shapes
 machines = sum(machine_groups, ())
 
