@@ -3,6 +3,7 @@ from ape.env_manip import env_with_names
 from ape.schedule import gen_code
 from ape.theano_to_milp import compute_schedule, make_ilp
 from ape import ape_dir
+from ape.util import dearrayify
 
 def compile(env, machine_ids, compute_cost, comm_cost, ability,
         input_shapes, max_makespan):
@@ -28,7 +29,7 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     name_to_var = {var.name : var for var in env.inputs}
     input_shapes = {name_to_var[var.name] : input_shapes[var]
                         for var in input_shapes}
-    shapes = shape_of_variables(env, input_shapes)
+    shapes = dearrayify(shape_of_variables(env, input_shapes))
     shapes = {k.name : v for k,v in shapes.items()}
 
     # Compute schedule using Integer programming
