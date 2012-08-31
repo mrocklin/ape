@@ -2,7 +2,7 @@
 
 def debugprint(s):
     pass
-    stderr.write(s+"\n")
+    stderr.write(str(s)+"\n")
 
 if __name__ == '__main__':
     import time
