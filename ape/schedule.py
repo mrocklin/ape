@@ -121,7 +121,8 @@ def gen_code(sched, env_filename, var_shapes):
 
             [', '.join(map(var_id, job.outputs)) +
              " = %s("%fn_names[job] +
-             ', '.join(map(var_id, job.inputs)) + ')']              +
+             ', '.join(map(var_id, job.inputs)) + ')' +
+             "# %s"%(str(job))]              +
 
             ["send(%s, %s, '%s')"%(vid, variable_tags[vid], to_machine)
                 for vid, var in zip(map(var_id, job.outputs), job.outputs)
