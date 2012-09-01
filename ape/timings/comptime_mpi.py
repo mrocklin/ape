@@ -42,7 +42,7 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
 
     known_shapes_str = str({str(k):v for k,v in known_shapes.items()})
 
-    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %sape/mpi_computation_run.py "%s" %d'''%(ape_dir, known_shapes_str, niter))
+    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %sape/timings/comptime_mpi_run.py "%s" %d'''%(ape_dir, known_shapes_str, niter))
 
     # Send the fgraphs as strings (they will be unpacked on the other end)
 

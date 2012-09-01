@@ -30,7 +30,7 @@ def comm_times_single(ns, send_host, recv_host):
     file = open('_machinefile.txt', 'w')
     file.write('\n'.join(hosts))
     file.close()
-    s = os.popen('''mpiexec -np 2 -machinefile _machinefile.txt python %sape/mpi_timing_single.py "%s" %s %s'''%(ape_dir, ns, hosts[0], hosts[1]))
+    s = os.popen('''mpiexec -np 2 -machinefile _machinefile.txt python %sape/timings/commtime_mpi_run_single.py "%s" %s %s'''%(ape_dir, ns, hosts[0], hosts[1]))
 
     values = ast.literal_eval(s.read())
     return values
@@ -45,7 +45,7 @@ def comm_times_group(ns, hosts):
     file = open('_machinefile.txt', 'w')
     file.write('\n'.join(hosts))
     file.close()
-    s = os.popen('''mpiexec -np %d -machinefile _machinefile.txt python %sape/mpi_timing_group.py "%s" %s'''%(len(hosts), ape_dir, ns, ' '.join(hosts))).read()
+    s = os.popen('''mpiexec -np %d -machinefile _machinefile.txt python %sape/timings/commtime_mpi_run_group.py "%s" %s'''%(len(hosts), ape_dir, ns, ' '.join(hosts))).read()
 
     values = ast.literal_eval(s)
     return values

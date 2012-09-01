@@ -1,5 +1,5 @@
 if __name__ == '__main__':
-    from mpi_prelude import *
+    from ape.mpi_prelude import *
     import time
     from sys import argv, stdout
     import ast
