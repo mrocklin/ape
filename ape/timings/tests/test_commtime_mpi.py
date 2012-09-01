@@ -1,7 +1,8 @@
 import ast
 import os
 from ape.timings.commtime_mpi import (comm_times_single, model,
-        comm_times_group, model_dict_group, function_from_group_dict)
+        comm_times_group, model_dict_group, function_from_group_dict,
+        commtime_dict_mpi)
 
 def test_mpi_timing_single():
     values = comm_times_single([10, 100, 1000], 'ankaa.cs.uchicago.edu',
@@ -39,3 +40,15 @@ def test_model():
     assert isinstance(slope, float)
     assert 0 < intercept < .01
     assert 0 < slope < .00001
+
+def test_commtime_dict_mpi():
+    machines = {'ankaa.cs.uchicago.edu', 'mimosa.cs.uchicago.edu',
+                'milkweed.cs.uchicago.edu'}
+    network = {(a,b): {'type':'mpi'} for a in machines
+                                     for b in machines
+                                     if a!=b}
+    results = commtime_dict_mpi(network)
+    result = results['ankaa.cs.uchicago.edu', 'mimosa.cs.uchicago.edu']
+    assert set(result.keys()).issuperset(set(('intercept', 'slope')))
+    assert isinstance(result['intercept'], float)
+    assert set(results.keys()) == set(network.keys())

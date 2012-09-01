@@ -1,6 +1,7 @@
 import ast
 import os
 import numpy as np
+from ape.util import merge
 
 ape_dir = '/home/mrocklin/workspace/ape/'
 
