@@ -1,7 +1,7 @@
 import ast
 import os
-from ape.mpi_timing import (comm_times_single, model, comm_times_group,
-        model_dict_group, function_from_group_dict)
+from ape.timings.commtime_mpi import (comm_times_single, model,
+        comm_times_group, model_dict_group, function_from_group_dict)
 
 def test_mpi_timing_single():
     values = comm_times_single([10, 100, 1000], 'ankaa.cs.uchicago.edu',
@@ -19,7 +19,9 @@ def test_model_dict_group():
     data = [('a','b',10., 1.), ('a','b',100., 1.),
             ('b','a',10., 1.), ('b','a',100., 1.)]
     d = model_dict_group(data)
-    int, slope = d['a', 'b']
+    mod_dict = d['a', 'b']
+    int, slope = mod_dict['intercept'], mod_dict['slope']
+
     assert abs(int-1)<.000001 and abs(slope - 0) < .000001
 
 def test_function_from_group_dict():

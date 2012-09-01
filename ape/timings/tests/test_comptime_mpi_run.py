@@ -1,4 +1,4 @@
-from ape.mpi_computation_run import time_computation
+from ape.timings.comptime_mpi_run import time_computation
 import theano
 import numpy as np
 

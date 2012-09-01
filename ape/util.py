@@ -54,3 +54,11 @@ def dearrayify(x):
         return {k:dearrayify(val) for k, val in x.items()}
     return x
 
+
+def merge_values(d, e):
+    if not all(isinstance(val, dict) for val in (d.values() + e.values())):
+        raise TypeError("Must be dicts of value-type dict")
+    if not d.keys() == e.keys():
+        raise ValueError("Dicts must have same keys")
+
+    return {key: merge(d[key], e[key]) for key in d}

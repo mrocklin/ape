@@ -1,6 +1,7 @@
 from theano.tensor.utils import shape_of_variables
 from theano.gof.fg import FunctionGraph as FunctionGraph
-from ape.timings import compute_runtime_dict, compute_commtimes
+from ape.timings.comptime import comptime_dict
+from ape.timings.commtime import compute_commtimes
 from ape.env_manip import variables_with_names, math_optimize
 from ape.util import save_dict, load_dict
 from ape.timings import (make_runtime_function, make_commtime_function)
@@ -22,7 +23,7 @@ input_shapes2 = {fgraph2_var_dict[str(var)]:input_shapes[var]
 all_shapes = shape_of_variables(fgraph, input_shapes)
 
 # Compute Cost
-compute_times = compute_runtime_dict(fgraph, input_shapes, 10, machine_groups)
+compute_times = comptime_dict(fgraph, input_shapes, 10, machine_groups)
 save_dict('compute_times.dat', compute_times)
 # compute_times = load_dict('compute_times.dat')
 compute_cost = make_runtime_function(compute_times)

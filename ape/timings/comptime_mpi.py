@@ -1,10 +1,14 @@
-from ape.env_manip import pack_many, env_with_names
 from ape import ape_dir
+from ape.env_manip import pack_many, env_with_names
 from ape.env_manip import fgraph_iter
 from theano.tensor.utils import shape_of_variables
 import os
 import ast
 from ape.util import dearrayify
+
+def comptime_dict(fgraph, input_shapes, niter, machine_groups):
+    return {mg: compute_time_on_machine(fgraph, input_shapes, mg[0], niter)
+            for mg in machine_groups}
 
 def compute_time_on_machine(fgraph, input_shapes, machine, niter):
     """ Computes computation time of funciton graph on a remote machine

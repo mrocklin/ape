@@ -4,6 +4,18 @@ import numpy as np
 
 ape_dir = '/home/mrocklin/workspace/ape/'
 
+def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
+    if not all(v['type'] == 'mpi' for v in network.values()):
+        raise ValueError("Trying to compute network properties of non-mpi"
+                         "connections")
+    # TODO: This is incorrect. We're assuming that the network is a clique
+    hosts = set(host for (send, recv) in network for host in (send, recv))
+
+    performance = model_dict_group(comm_times_group(nbytes, hosts))
+
+    # inject new information into network dict
+    return {key: merge(network[key], performance[key]) for key in network}
+
 def comm_times_single(ns, send_host, recv_host):
     """ Computes transit times between two hosts
     Returns a list of [(nbytes, transit-time)]
@@ -47,7 +59,7 @@ def model_from_values(bytes_times):
     """
     nbytes, times = zip(*bytes_times)
     slope, intercept = np.polyfit(nbytes, times, 1)
-    return intercept, slope
+    return {'intercept': intercept, 'slope':slope}
 
 
 def model_dict_group(values):
