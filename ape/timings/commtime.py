@@ -12,7 +12,7 @@ def make_commtime_function(cdict, known_shapes):
 
     inputs
     ------
-    cdict - dictionary mapping {sender, receiver : intercept, slope}
+    cdict - dictionary mapping {(sender, receiver) : {'intercept':i, 'slope':s}}
     input_shapes - dictionary from input variables to shapes :: {Tensor : shape}
 
     outputs
@@ -33,7 +33,8 @@ def make_commtime_function(cdict, known_shapes):
         if sender == receiver:
             return 0
         nbytes = sum(map(bytes, an.outputs))
-        intercept, slope = cdict[sender, receiver]
+        intercept = cdict[sender, receiver]['intercept']
+        slope     = cdict[sender, receiver]['slope']
         return slope*nbytes + intercept
 
     return commtime

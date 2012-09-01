@@ -2,7 +2,8 @@ import theano
 from ape.timings.commtime import make_commtime_function
 
 def test_make_commtime_function():
-    data = {('a','b'): (1, 1) , ('b','a'): (0, 10)}
+    data = {('a','b'): {'intercept':1, 'slope':1},
+            ('b','a'): {'intercept':0, 'slope':10}}
 
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
