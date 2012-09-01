@@ -6,7 +6,7 @@ import os
 import ast
 from ape.util import dearrayify
 
-def comptime_dict(fgraph, input_shapes, niter, machine_groups):
+def comptime_dict_mpi(fgraph, input_shapes, niter, machine_groups):
     return {mg: compute_time_on_machine(fgraph, input_shapes, mg[0], niter)
             for mg in machine_groups}
 

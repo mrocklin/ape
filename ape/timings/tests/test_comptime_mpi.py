@@ -1,7 +1,7 @@
 from ape.timings.comptime_mpi import compute_time_on_machine
 from ape.env_manip import fgraph_iter, variables_with_names
 import theano
-from ape.timings.comptime_mpi import comptime_dict
+from ape.timings.comptime_mpi import comptime_dict_mpi
 from ape.timings.comptime import make_runtime_function
 
 def _test_compute_time_on_machine(machine):
@@ -24,7 +24,7 @@ def test_nfs():
 def test_remote():
     _test_compute_time_on_machine('baconost.cs.uchicago.edu')
 
-def test_comptime_dict():
+def test_comptime_dict_mpi():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
@@ -33,7 +33,7 @@ def test_comptime_dict():
     machine_groups = (('ankaa.cs.uchicago.edu', 'mimosa.cs.uchicago.edu'),
                       ('milkweed.cs.uchicago.edu',))
 
-    times = comptime_dict(fgraph, {x:(1000,1000), y:(1000,1000)}, 10,
+    times = comptime_dict_mpi(fgraph, {x:(1000,1000), y:(1000,1000)}, 10,
                                  machine_groups)
     assert isinstance(times, dict)
     assert set(times.keys()) == set(machine_groups)

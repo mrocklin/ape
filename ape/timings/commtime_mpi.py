@@ -6,6 +6,14 @@ from ape.util import merge
 ape_dir = '/home/mrocklin/workspace/ape/'
 
 def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
+    """
+    inputs
+        network - dict like {(A, B): {'type': 'mpi'}}
+        nbytes  - iterable of byte counts
+
+    outputs
+        network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
+    """
     if not all(v['type'] == 'mpi' for v in network.values()):
         raise ValueError("Trying to compute network properties of non-mpi"
                          "connections")

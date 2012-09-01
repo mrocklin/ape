@@ -1,3 +1,6 @@
+from comptime_mpi import comptime_dict_mpi
+from comptime_gpu import comptime_dict_gpu
+
 def make_runtime_function(machine_time_dict):
     """
     Create a callable function from a dict containing runtimes for machines
