@@ -1,4 +1,4 @@
-from ape.util import iterable, chain, load_dict, save_dict, dearrayify
+from ape.util import iterable, chain, load_dict, save_dict, dearrayify, merge
 
 def test_iterable():
     assert iterable([1,2])
@@ -34,3 +34,8 @@ def test_dearrayify():
     assert dearrayify((3, 4)) == (3, 4)
     assert dearrayify({'x': (array(1000), array(1000)), 'y': (), 'z': 5}) == \
             {'x': (1000, 1000), 'y': (), 'z': 5}
+
+def test_merge():
+    d = {1:2, 3:4}
+    e = {4:5}
+    assert merge(d, e) == {1:2, 3:4, 4:5}

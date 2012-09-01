@@ -62,3 +62,6 @@ def merge_values(d, e):
         raise ValueError("Dicts must have same keys")
 
     return {key: merge(d[key], e[key]) for key in d}
+
+def merge(d, e):
+    return dict(d.items() + e.items())
