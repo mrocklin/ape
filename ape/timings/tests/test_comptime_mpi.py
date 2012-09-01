@@ -2,6 +2,7 @@ from ape.timings.comptime_mpi import compute_time_on_machine
 from ape.env_manip import fgraph_iter, variables_with_names
 import theano
 from ape.timings.comptime_mpi import comptime_dict
+from ape.timings.comptime import make_runtime_function
 
 def _test_compute_time_on_machine(machine):
     x = theano.tensor.matrix('x')

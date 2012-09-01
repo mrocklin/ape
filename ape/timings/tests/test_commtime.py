@@ -1,5 +1,5 @@
 import theano
-from ape.timings.timings import make_commtime_function
+from ape.timings.commtime import make_commtime_function
 
 def test_make_commtime_function():
     data = {('a','b'): (1, 1) , ('b','a'): (0, 10)}

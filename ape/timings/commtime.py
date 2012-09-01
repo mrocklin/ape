@@ -1,5 +1,8 @@
 from commtime_mpi import commtime_dict_mpi
 from commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
+from commtime_mpi import function_from_group_dict
+from ape.util import prod
+from ape.theano_util import bytes_of_dtype
 
 commtime_dict_fns = (commtime_dict_mpi, commtime_dict_togpu,
                      commtime_dict_fromgpu)
@@ -17,7 +20,7 @@ def make_commtime_function(cdict, known_shapes):
     commtime - function :: ApplyNode, Sender, Receiver -> time (float)
     """
 
-    bytes_fn = mpi_timing.function_from_group_dict(cdict)
+    bytes_fn = function_from_group_dict(cdict)
     known_shapes = {str(key): known_shapes[key] for key in known_shapes}
 
     def bytes(var):
