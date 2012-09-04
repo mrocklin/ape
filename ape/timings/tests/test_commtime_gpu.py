@@ -2,11 +2,10 @@ import ast
 import os
 from ape import ape_dir
 import theano
-from theano import sandbox
 from ape.timings.commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
 
 def test_commtime_tocpu_run():
-    if not sandbox.cuda.cuda_available:
+    if theano.config.device != 'gpu':
         return
     ns = [10, 100]
     results = os.popen('python %s/ape/timings/commtime_togpu_run.py "%s"'%(ape_dir, str(ns))).read()
@@ -16,7 +15,7 @@ def test_commtime_tocpu_run():
     assert len(results) == len(ns)
 
 def test_commtime_togpu_run():
-    if not sandbox.cuda.cuda_available:
+    if theano.config.device != 'gpu':
         return
     ns = [10, 100]
     results = os.popen('python %s/ape/timings/commtime_tocpu_run.py "%s"'%(ape_dir, str(ns))).read()

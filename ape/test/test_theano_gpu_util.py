@@ -1,10 +1,9 @@
 from ape.theano_gpu_util import *
 import numpy as np
 import theano
-from theano import sandbox
 
 def test_cpu_to_gpu_graph():
-    if not sandbox.cuda.cuda_available:
+    if theano.config.device != 'gpu':
         return
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
@@ -17,7 +16,7 @@ def test_cpu_to_gpu_graph():
                 for inp in (gpu_inputs+gpu_outputs))
 
 def test_togpu_tocpu_data():
-    if not sandbox.cuda.cuda_available:
+    if theano.config.device != 'gpu':
         return
     x = np.ones((5,5), dtype='float32')
     gx = togpu_data(x)
@@ -27,7 +26,7 @@ def test_togpu_tocpu_data():
 
 
 def test_cpu_to_gpu_var():
-    if not sandbox.cuda.cuda_available:
+    if theano.config.device != 'gpu':
         return
     x = theano.tensor.matrix('x')
     gx, cx = cpu_to_gpu_var(x)
