@@ -1,5 +1,6 @@
 import commtime_mpi
 import comptime_gpu
 import commtime
+
 import comptime
-import comptime_mpi_run
+import comptime_run
