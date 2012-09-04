@@ -1,6 +1,6 @@
-from commtime_mpi import commtime_dict_mpi
-from commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
-from commtime_mpi import function_from_group_dict
+from ape.timings.commtime_mpi import commtime_dict_mpi
+from ape.timings.commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
+from ape.timings.commtime_util import function_from_group_dict
 from ape.util import prod
 from ape.theano_util import bytes_of_dtype
 
@@ -49,3 +49,4 @@ def make_commtime_function(cdict, known_shapes):
         return slope*nbytes + intercept
 
     return commtime
+
