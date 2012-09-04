@@ -3,11 +3,6 @@ from ape.util import merge
 from ape import ape_dir
 
 def commtime_dict_togpu(network, nbytes=[10, 100, 1000, 10000]):
-    if not all(v['type'] == 'togpu' for v in network.values()):
-        raise ValueError("Trying to compute network properties of incompatible"
-                         "network - must contain only togpu connections")
-
-
     return {(host, gpu):
                 merge(network[host, gpu],
                       model_from_values(comm_times_togpu(nbytes, host)))
@@ -15,11 +10,6 @@ def commtime_dict_togpu(network, nbytes=[10, 100, 1000, 10000]):
             if network[host, gpu]['type'] == 'togpu'}
 
 def commtime_dict_fromgpu(network, nbytes=[10, 100, 1000, 10000]):
-    if not all(v['type'] == 'fromgpu' for v in network.values()):
-        raise ValueError("Trying to compute network properties of incompatible"
-                         "network - must contain only togpu connections")
-
-
     return {(gpu, host):
             merge(network[gpu, host],
                   model_from_values(comm_times_fromgpu(nbytes, host)))

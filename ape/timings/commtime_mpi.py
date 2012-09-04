@@ -12,11 +12,10 @@ def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
     outputs
         network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
     """
-    if not all(v['type'] == 'mpi' for v in network.values()):
-        raise ValueError("Trying to compute network properties of non-mpi"
-                         "connections")
     # TODO: This is incorrect. We're assuming that the network is a clique
-    hosts = set(host for (send, recv) in network for host in (send, recv))
+    hosts = set(host for (send, recv) in network
+                     for host in (send, recv)
+                     if network[send, recv]['type'] is 'mpi')
 
     performance = model_dict_group(comm_times_group(nbytes, hosts))
 

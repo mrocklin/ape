@@ -7,6 +7,18 @@ from ape.theano_util import bytes_of_dtype
 commtime_dict_fns = (commtime_dict_mpi, commtime_dict_togpu,
                      commtime_dict_fromgpu)
 
+def commtime_dict(network, *args, **kwargs):
+    """
+    inputs
+        network - dict like {(A, B): {'type': 'mpi'}}
+
+    outputs
+        network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
+    """
+    for fn in commtime_dict_fns:
+        network = fn(network, *args, **kwargs)
+    return network
+
 def _commtime_dict_interface(network):
     """
     inputs
