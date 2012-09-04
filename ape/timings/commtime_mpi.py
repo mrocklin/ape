@@ -20,7 +20,7 @@ def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
     performance = model_dict_group(comm_times_group(nbytes, hosts))
 
     # inject new information into network dict
-    return {key: merge(network[key], performance[key]) for key in network}
+    return {key: merge(network[key], performance[key]) for key in performance}
 
 def comm_times_single(ns, send_host, recv_host):
     """ Computes transit times between two hosts

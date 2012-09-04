@@ -1,7 +1,7 @@
 from ape.timings.commtime_mpi import commtime_dict_mpi
 from ape.timings.commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
 from ape.timings.commtime_util import function_from_group_dict
-from ape.util import prod
+from ape.util import prod, merge
 from ape.theano_util import bytes_of_dtype
 
 commtime_dict_fns = (commtime_dict_mpi, commtime_dict_togpu,
@@ -15,9 +15,8 @@ def commtime_dict(network, *args, **kwargs):
     outputs
         network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
     """
-    for fn in commtime_dict_fns:
-        network = fn(network, *args, **kwargs)
-    return network
+    networks = [fn(network, *args, **kwargs) for fn in commtime_dict_fns]
+    return reduce(merge, networks, {})
 
 def _commtime_dict_interface(network):
     """
