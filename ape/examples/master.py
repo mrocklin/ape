@@ -1,7 +1,7 @@
 from theano.tensor.utils import shape_of_variables
 from theano.gof.fg import FunctionGraph as FunctionGraph
 from ape.timings.comptime_mpi import comptime_dict_mpi
-from ape.timings.commtime_mpi import commtime_dict_mpi
+from ape.timings.commtime import commtime_dict
 from ape.env_manip import variables_with_names, math_optimize
 from ape.util import save_dict, load_dict
 from ape.timings.comptime import make_runtime_function
@@ -29,7 +29,7 @@ save_dict('compute_times.dat', compute_times)
 compute_cost = make_runtime_function(compute_times)
 
 # Communication Cost
-comm_dict = commtime_dict_mpi(network, [10,100,1000,2000]*5)
+comm_dict = commtime_dict(network, [10,100,1000,2000]*5)
 
 save_dict('comm_times.dat', comm_dict)
 # comm_dict = load_dict('comm_times.dat')
