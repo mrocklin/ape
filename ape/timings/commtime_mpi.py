@@ -47,24 +47,3 @@ def comm_times_group(ns, hosts):
     return run_on_hosts(hosts,
         '''python %sape/timings/commtime_mpi_run_group.py "%s" %s'''%(
             ape_dir, ns, ' '.join(hosts)))
-
-# Not used
-def model(ns, send_host, recv_host):
-    """ Computes the latency and inverse bandwidth between two hosts
-
-    returns latency (intercept) and inverse bandwidth (slope) of the values
-    returned by comm_times
-
-    >>> model([10, 100, 1000], 'sender.univ.edu', 'receiver.univ.edu')
-    (0.00017246120293471764, 8.8186875357188027e-08)
-
-    time = .000172 + 8.818e-8*nbytes
-
-    TODO - this function minimizes squared error. The larger values will
-    dominate. Should weight nbytes = 10 similarly to nbytes = 1e9
-    """
-
-    values = comm_times_single(ns, send_host, recv_host)
-    nbytes, times = zip(*values)
-    slope, intercept = np.polyfit(nbytes, times, 1)
-    return intercept, slope
