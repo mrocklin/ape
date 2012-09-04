@@ -26,7 +26,7 @@ def model_from_values(bytes_times):
 
     inputs [(nbytes, transit_time)]
 
-    outputs (intercept, slope)
+    outputs {'intercept': .001, 'slope': .000054}
     """
     nbytes, times = zip(*bytes_times)
     slope, intercept = np.polyfit(nbytes, times, 1)
