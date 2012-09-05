@@ -6,16 +6,13 @@ import os
 import ast
 from ape.util import dearrayify
 
-def comptime_dict_mpi(fgraph, input_shapes, niter, machine_groups):
-    return {mg: compute_time_on_machine(fgraph, input_shapes, mg[0], niter)
-            for mg in machine_groups}
-
-def compute_time_on_machine(fgraph, input_shapes, machine, niter):
+def _compute_time_on_machine(runfile, fgraph, input_shapes, machine, niter):
     """ Computes computation time of funciton graph on a remote machine
 
     Returns average duration of the computation (time)
 
     inputs:
+        runfile - The program to run on the remote machine
         fgraph  - A Theano FunctionGraph
         input_shapes - A dict mapping input variable to array shape
         machine - A machine on which to run the graph
@@ -24,8 +21,13 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
     outputs:
         A dict mapping apply node to average runtime
 
-    >>> compute_time_on_machine(fgraph, {x: (10, 10)}, 'receiver.univ.edu', 10)
-    {dot(x, x+y): 0.133, Add(x, y): .0012}
+    >>> _compute_time_on_machine(runfile, fgraph, {x: (10, 10)}, 'receiver.univ.edu', 10)
+    {dot(x, Add(x, y)): 0.133, Add(x, y): .0012}
+
+    See Also
+    --------
+        comptime_dict_cpu
+        comptime_dict_gpu
     """
 
     file = open('_machinefile.txt', 'w')
@@ -42,7 +44,7 @@ def compute_time_on_machine(fgraph, input_shapes, machine, niter):
 
     known_shapes_str = str({str(k):v for k,v in known_shapes.items()})
 
-    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %sape/timings/comptime_run.py "%s" %d'''%(ape_dir, known_shapes_str, niter))
+    stdin, stdout, stderr = os.popen3('''mpiexec -np 1 -machinefile _machinefile.txt python %s%s "%s" %d'''%(ape_dir, runfile, known_shapes_str, niter))
 
     # Send the fgraphs as strings (they will be unpacked on the other end)
 

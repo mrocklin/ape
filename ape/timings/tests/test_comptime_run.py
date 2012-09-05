@@ -1,20 +1,8 @@
-from ape.timings.comptime_run import time_computation, comptime_run
+from ape.timings.comptime_run import comptime_run
 import theano
-import numpy as np
 from ape.util import dearrayify
 from theano.tensor.utils import shape_of_variables
 from ape.env_manip import variables_with_names, fgraph_iter
-
-def test_time_computaiton():
-    x = theano.tensor.matrix('x')
-    y = theano.tensor.matrix('y')
-    z = theano.tensor.dot(x, y)
-
-    xx = np.ones((100, 100), dtype=x.dtype)
-    yy = np.ones((100, 100), dtype=y.dtype)
-
-    time = time_computation((x, y), (z,), (xx, yy), 5)
-    assert isinstance(time, float)
 
 def test_comptime_run():
     x = theano.tensor.matrix('x')

@@ -1,28 +1,13 @@
 # See companion file mpi_computation_time.py
-import time
 from sys import argv, stdout, stdin, stderr
 import theano
 import numpy as np
 from ape.env_manip import unpack_many
 import ast
 
-
 def debugprint(s):
     pass
     # stderr.write(str(s)+"\n")
-
-def time_computation(inputs, outputs, numeric_inputs, niter):
-
-    f = theano.function(inputs, outputs)
-
-    starttime = time.time()
-    debugprint("Computing")
-    for n in xrange(niter):
-        outputs = f(*numeric_inputs)
-    endtime = time.time()
-    duration = endtime - starttime
-
-    return duration/niter
 
 def collect_inputs(argv, stdin):
 
@@ -57,12 +42,3 @@ def comptime_run(known_shapes, niter, fgraphs, time_computation_fn):
         results.append(duration)
 
     return results
-
-if __name__ == '__main__':
-
-    known_shapes, niter, fgraphs = collect_inputs(argv, stdin)
-    results = comptime_run(known_shapes, niter, fgraphs, time_computation)
-
-    stdout.write(str(results))
-    stdout.close()
-

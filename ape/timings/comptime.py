@@ -1,5 +1,12 @@
-from comptime_mpi import comptime_dict_mpi
+from comptime_cpu import comptime_dict_cpu
 from comptime_gpu import comptime_dict_gpu
+
+comptime_dict_fns = [comptime_dict_cpu, comptime_dict_gpu]
+
+def comptime_dict(fgraph, input_shapes, niter, machines, machine_groups=None):
+    dicts = [fn(fgraph, input_shapes, niter, machines, machine_groups)
+             for fn in comptime_dict_fns]
+    return reduce(merge, dicts, {})
 
 def make_runtime_function(machine_time_dict):
     """
@@ -30,4 +37,3 @@ def make_runtime_function(machine_time_dict):
         return d[id][str(apply)]
 
     return runtime_fn
-
