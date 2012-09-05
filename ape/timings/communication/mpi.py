@@ -34,7 +34,7 @@ def comm_times_single(ns, send_host, recv_host):
     """
 
     return run_on_hosts((send_host, recv_host),
-        '''python %sape/timings/communication/run_single.py "%s" %s %s'''%(
+        '''python %sape/timings/communication/mpi_run_single.py "%s" %s %s'''%(
             ape_dir, str(ns), send_host, recv_host))
 
 def comm_times_group(ns, hosts):

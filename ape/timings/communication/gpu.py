@@ -27,7 +27,7 @@ def comm_times_togpu(nbytes, host):
     """
 
     return run_on_hosts((host, ),
-       '''python %sape/timings/commtime_togpu_run.py "%s"'''%(
+       '''python %sape/timings/communication/togpu_run.py "%s"'''%(
            ape_dir, str(nbytes)))
 def comm_times_fromgpu(nbytes, host):
     """ Computes transit times between gpu and host
@@ -39,7 +39,7 @@ def comm_times_fromgpu(nbytes, host):
     """
 
     return run_on_hosts((host, ),
-     '''python %sape/timings/commtime_tocpu_run.py "%s"'''%(
+     '''python %sape/timings/communication/tocpu_run.py "%s"'''%(
          ape_dir, str(nbytes)))
 
 
