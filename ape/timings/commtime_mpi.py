@@ -1,7 +1,8 @@
 import numpy as np
 from ape.util import merge
 from ape import ape_dir
-from ape.timings.commtime_util import run_on_hosts, model_dict_group
+from ape.timings.commtime_util import model_dict_group
+from ape.timings.comm_util import run_on_hosts
 
 def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
     """
