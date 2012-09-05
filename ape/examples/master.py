@@ -1,13 +1,12 @@
 from theano.tensor.utils import shape_of_variables
 from theano.gof.fg import FunctionGraph as FunctionGraph
-from ape.timings.comptime import comptime_dict
-from ape.timings.commtime import commtime_dict
 from ape.env_manip import variables_with_names, math_optimize
 from ape.util import save_dict, load_dict
-from ape.timings.comptime import make_runtime_function
-from ape.timings.commtime import make_commtime_function
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
+
+from ape.timings.computation   import comptime_dict, make_runtime_function
+from ape.timings.communication import commtime_dict, make_commtime_function
 
 from triple import machine_groups, network, machines
 from kalman import inputs, outputs, input_shapes
