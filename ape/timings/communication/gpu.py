@@ -1,5 +1,5 @@
-from ape.timings.commtime_util import model_from_values
-from ape.timings.comm_util import run_on_hosts
+from ape.timings.communication.util import model_from_values
+from ape.timings.util import run_on_hosts
 from ape.util import merge
 from ape import ape_dir
 

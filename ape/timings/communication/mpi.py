@@ -1,8 +1,8 @@
 import numpy as np
 from ape.util import merge
 from ape import ape_dir
-from ape.timings.commtime_util import model_dict_group
-from ape.timings.comm_util import run_on_hosts
+from ape.timings.communication.util import model_dict_group
+from ape.timings.util import run_on_hosts
 
 def commtime_dict_mpi(network, nbytes=[10, 100, 1000, 10000]):
     """
@@ -34,7 +34,7 @@ def comm_times_single(ns, send_host, recv_host):
     """
 
     return run_on_hosts((send_host, recv_host),
-        '''python %sape/timings/commtime_mpi_run_single.py "%s" %s %s'''%(
+        '''python %sape/timings/communication/run_single.py "%s" %s %s'''%(
             ape_dir, str(ns), send_host, recv_host))
 
 def comm_times_group(ns, hosts):
@@ -45,5 +45,5 @@ def comm_times_group(ns, hosts):
     """
 
     return run_on_hosts(hosts,
-        '''python %sape/timings/commtime_mpi_run_group.py "%s" %s'''%(
+        '''python %sape/timings/communication/mpi_run_group.py "%s" %s'''%(
             ape_dir, ns, ' '.join(hosts)))

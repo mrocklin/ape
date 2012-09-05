@@ -1,6 +1,6 @@
-from ape.timings.commtime_mpi import commtime_dict_mpi
-from ape.timings.commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
-from ape.timings.commtime_util import function_from_group_dict
+from ape.timings.communication.mpi import commtime_dict_mpi
+from ape.timings.communication.gpu import commtime_dict_togpu, commtime_dict_fromgpu
+from ape.timings.communication.util import function_from_group_dict
 from ape.util import prod, merge
 from ape.theano_util import bytes_of_dtype
 

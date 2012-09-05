@@ -1,5 +1,5 @@
 import theano
-from ape.timings.commtime import make_commtime_function, commtime_dict
+from ape.timings.communication.master import make_commtime_function, commtime_dict
 from theano.tensor.utils import shape_of_variables
 
 x = theano.tensor.matrix('x')

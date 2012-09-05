@@ -1,4 +1,4 @@
-from ape.timings.commtime_util import ( model_dict_group,
+from ape.timings.communication.util import ( model_dict_group,
         function_from_group_dict)
 import numpy as np
 

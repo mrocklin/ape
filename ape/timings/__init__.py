@@ -1,6 +1,4 @@
-import commtime_mpi
-import comptime_gpu
-import commtime
+import communication
 
 import comptime
 import comptime_run

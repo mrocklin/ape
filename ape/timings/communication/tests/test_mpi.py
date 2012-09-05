@@ -1,6 +1,6 @@
 import ast
 import os
-from ape.timings.commtime_mpi import (comm_times_single,
+from ape.timings.communication.mpi import (comm_times_single,
         comm_times_group, commtime_dict_mpi)
 
 def test_comm_times_single():

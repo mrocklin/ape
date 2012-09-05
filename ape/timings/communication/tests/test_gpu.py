@@ -2,13 +2,13 @@ import ast
 import os
 from ape import ape_dir
 import theano
-from ape.timings.commtime_gpu import commtime_dict_togpu, commtime_dict_fromgpu
+from ape.timings.communication.gpu import commtime_dict_togpu, commtime_dict_fromgpu
 
 def test_commtime_tocpu_run():
     if theano.config.device != 'gpu':
         return
     ns = [10, 100]
-    results = os.popen('python %s/ape/timings/commtime_togpu_run.py "%s"'%(ape_dir, str(ns))).read()
+    results = os.popen('python %s/ape/timings/communication/togpu_run.py "%s"'%(ape_dir, str(ns))).read()
     results = ast.literal_eval(results)
     assert isinstance(results, list)
     assert all(len(result) == 2 for result in results)
@@ -18,7 +18,7 @@ def test_commtime_togpu_run():
     if theano.config.device != 'gpu':
         return
     ns = [10, 100]
-    results = os.popen('python %s/ape/timings/commtime_tocpu_run.py "%s"'%(ape_dir, str(ns))).read()
+    results = os.popen('python %s/ape/timings/communication/tocpu_run.py "%s"'%(ape_dir, str(ns))).read()
     results = ast.literal_eval(results)
     assert isinstance(results, list)
     assert all(len(result) == 2 for result in results)
