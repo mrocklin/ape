@@ -1,4 +1,3 @@
 import communication
 
-import comptime
-import comptime_run
+import computation

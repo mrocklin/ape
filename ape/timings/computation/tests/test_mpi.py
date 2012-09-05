@@ -1,4 +1,4 @@
-from ape.timings.comptime_mpi import _compute_time_on_machine
+from ape.timings.computation.mpi import _compute_time_on_machine
 from ape.env_manip import variables_with_names
 import theano
 
@@ -11,7 +11,7 @@ def _test_compute_time_on_machine(machine):
     input_shapes = {x:(1000,1000), y:(1000,1000)}
     niter = 3
 
-    times = _compute_time_on_machine('ape/timings/comptime_run_cpu.py',
+    times = _compute_time_on_machine('ape/timings/computation/run_cpu.py',
                                      fgraph, input_shapes, machine, niter)
     assert isinstance(times, dict)
     assert set(map(str, fgraph.nodes)) == set(times.keys())

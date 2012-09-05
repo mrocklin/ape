@@ -1,7 +1,7 @@
 from sys import argv, stdout, stdin, stderr
 import theano
 import time
-from ape.timings.comptime_run import debugprint, collect_inputs, comptime_run
+from ape.timings.computation.run import debugprint, collect_inputs, comptime_run
 from ape.theano_gpu_util import cpu_to_gpu_graph, togpu_data
 
 def time_computation(inputs, outputs, numeric_inputs, niter):

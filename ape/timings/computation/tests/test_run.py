@@ -1,4 +1,4 @@
-from ape.timings.comptime_run import comptime_run
+from ape.timings.computation.run import comptime_run
 import theano
 from ape.util import dearrayify
 from theano.tensor.utils import shape_of_variables

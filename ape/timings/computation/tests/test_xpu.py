@@ -1,6 +1,6 @@
 import theano
 from ape.env_manip import fgraph_iter, variables_with_names
-from ape.timings.comptime import make_runtime_function
+from ape.timings.computation.master import make_runtime_function
 
 def _test_comptime_dict_xpu(machines, machine_groups, comptime_dict_fn):
     x = theano.tensor.matrix('x')

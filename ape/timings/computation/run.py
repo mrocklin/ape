@@ -1,4 +1,3 @@
-# See companion file mpi_computation_time.py
 from sys import argv, stdout, stdin, stderr
 import theano
 import numpy as np

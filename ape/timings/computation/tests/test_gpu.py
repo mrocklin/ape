@@ -1,5 +1,5 @@
-from ape.timings.comptime_gpu import comptime_dict_gpu
-from test_comptime_xpu import _test_comptime_dict_xpu
+from ape.timings.computation.gpu import comptime_dict_gpu
+from test_xpu import _test_comptime_dict_xpu
 
 def test_comptime_dict_gpu():
     machines = {'baconostgpu': {'type':'gpu',

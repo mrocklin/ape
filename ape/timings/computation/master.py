@@ -1,5 +1,5 @@
-from comptime_cpu import comptime_dict_cpu
-from comptime_gpu import comptime_dict_gpu
+from cpu import comptime_dict_cpu
+from gpu import comptime_dict_gpu
 from ape.util import merge
 
 comptime_dict_fns = [comptime_dict_cpu, comptime_dict_gpu]

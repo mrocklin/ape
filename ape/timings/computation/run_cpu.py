@@ -1,7 +1,7 @@
 from sys import argv, stdout, stdin, stderr
 import theano
 import time
-from ape.timings.comptime_run import debugprint, collect_inputs, comptime_run
+from ape.timings.computation.run import debugprint, collect_inputs, comptime_run
 
 mode = theano.compile.mode.get_default_mode()
 mode = mode.excluding('gpu')
