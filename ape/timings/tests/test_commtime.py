@@ -1,25 +1,35 @@
 import theano
 from ape.timings.commtime import make_commtime_function, commtime_dict
+from theano.tensor.utils import shape_of_variables
+
+x = theano.tensor.matrix('x')
+y = theano.tensor.matrix('y')
+z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
+
+env = theano.FunctionGraph([x,y], [z])
+
+dot = env.toposort()[2]
+known_shapes = shape_of_variables(env, {x:(100,100), y:(100,100)})
 
 def test_make_commtime_function():
     data = {('a','b'): {'intercept':1, 'slope':1},
             ('b','a'): {'intercept':0, 'slope':10}}
 
-    x = theano.tensor.matrix('x')
-    y = theano.tensor.matrix('y')
-    z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
+    commtime = make_commtime_function(data, known_shapes)
 
-    env = theano.FunctionGraph([x,y], [z])
+    assert commtime(dot, 'a', 'b') == 4*100*100 * 1  + 1
+    assert commtime(dot, 'b', 'a') == 4*100*100 * 10 + 0
 
-    dot = env.toposort()[2]
-
-    from theano.tensor.utils import shape_of_variables
-    known_shapes = shape_of_variables(env, {x:(100,100), y:(100,100)})
+def test_make_commtime_function_non_clique_network():
+    data = {('a','b'): {'intercept':1, 'slope':1},
+            ('b','a'): {'intercept':0, 'slope':10},
+            ('b','c'): {'intercept':0, 'slope':10}}
 
     commtime = make_commtime_function(data, known_shapes)
 
     assert commtime(dot, 'a', 'b') == 4*100*100 * 1  + 1
     assert commtime(dot, 'b', 'a') == 4*100*100 * 10 + 0
+    assert commtime(dot, 'c', 'a') > 10000
 
 def test_commtime_dict():
     network = {
