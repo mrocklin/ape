@@ -9,7 +9,7 @@ from ape.timings.commtime import make_commtime_function
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
 
-from nfs_triple import machine_groups, network, machines
+from triple import machine_groups, network, machines
 from kalman import inputs, outputs, input_shapes
 
 variables_with_names(inputs, outputs) # give identifiers to all variables
