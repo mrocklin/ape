@@ -121,14 +121,31 @@ def variables_with_names(inputs, outputs):
         var.name = _clean(name)
     return all_variables
 
-def env_with_names(env):
-    ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
-    env = theano.FunctionGraph(ins, outs)
+def unique(x):
+    return len(set(x)) == len(x)
+def hist(coll):
+    counts = {}
+    for elem in coll:
+        counts[elem] = counts.get(elem, 0) + 1
+    return counts
+def fgraph_with_names(fgraph):
+    """ Gives unique names to all variable within a FunctionGraph """
+    ins, outs  = theano.gof.graph.clone(fgraph.inputs, fgraph.outputs)
 
-    for i, var in enumerate(variables_of(env)):
-        var.name = var.name or "var_%d"%i
+    names = map(lambda var: var.name, fgraph.variables)
+    h = hist(names)
+    bad_var = lambda var: h[var.name] > 1
 
-    return env
+    fgraph = theano.FunctionGraph(ins, outs)
+
+    for i, var in enumerate(filter(bad_var, fgraph.variables)):
+        var.name = (var.name or "") + "_%d"%i
+
+    if not unique(map(str, fgraph.variables)):
+        raise ValueError("Not all variables have unique names."
+                         "Maybe you've named some of the variables identically")
+
+    return fgraph
 
 def fgraph_iter(fgraph):
     """ Returns iterator of atomic funciton graphs - really just apply nodes"""
