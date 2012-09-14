@@ -1,3 +1,11 @@
 *.pyc
 *.dat
-
+*.log
+*.pdf
+*.aux
+*.out
+*.log
+*.dot
+*.tmp
+*.dat
+*~
