@@ -1,5 +1,5 @@
 from theano.tensor.utils import shape_of_variables
-from ape.schedule import gen_code
+from ape.codegen.schedule import gen_code
 from ape.theano_to_milp import compute_schedule, make_ilp
 from ape import ape_dir
 from ape.util import dearrayify
@@ -41,6 +41,6 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     specifics = gen_code(sched, 'env.dat', shapes)
 
     # Read code template from template.py
-    f = open(ape_dir+'ape/template.py'); code = f.read(); f.close()
+    f = open(ape_dir+'ape/codegen/template.py'); code = f.read(); f.close()
 
     return code%specifics
