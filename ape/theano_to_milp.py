@@ -1,6 +1,6 @@
 from env_manip import precedes
 from collections import defaultdict
-from tompkins import schedule
+from tompkins.ilp import schedule
 import pulp
 
 def dummy_compute_cost(an, id):

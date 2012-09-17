@@ -41,7 +41,7 @@ Scheduling
 
 Currently our scheduling backend is built off of integer programming and, if it
 terminates, provides optimal solutions. You can read more about it
-[here](http://github.com/mrocklin/Tompkins).
+[here](http://github.com/mrocklin/Tompkins). APE depends on this repository.
 
 We also plan to build in a heuristic backend based around the HEFT algorithm. 
 
