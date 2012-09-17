@@ -5,6 +5,7 @@ from ape.env_manip import clean_variable, math_optimize
 from ape.util import save_dict, load_dict
 from ape.theano_to_milp import dummy_ability
 from ape.codegen.master import compile
+import os
 
 from ape.timings.computation   import comptime_dict, make_runtime_function
 from ape.timings.communication import commtime_dict, make_commtime_function
