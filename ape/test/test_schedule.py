@@ -9,41 +9,41 @@ import theano
 def test_gen_code_simple():
     x = theano.tensor.matrix('x')
     y = x+x*x
-    env = theano.FunctionGraph([x], [y])
-    theano.gof.graph.give_variables_names(env)
+    fgraph = theano.FunctionGraph([x], [y])
+    theano.gof.graph.utils.give_variables_names(fgraph.variables)
 
     machine_ids = ["ankaa", "mimosa"]
-    _test_gen_code(env, machine_ids)
+    _test_gen_code(fgraph, machine_ids)
 
 def test_gen_code_complex():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
-    env = theano.FunctionGraph([x, y], [z])
-    theano.gof.graph.give_variables_names(env)
+    fgraph= theano.FunctionGraph([x, y], [z])
+    theano.gof.graph.utils.give_variables_names(fgraph.variables)
     machine_ids = ["ankaa", "mimosa"]
 
-    _test_gen_code(env, machine_ids)
+    _test_gen_code(fgraph, machine_ids)
 
-def _test_gen_code(env, machine_ids):
+def _test_gen_code(fgraph, machine_ids):
 
-    sched = compute_schedule(*make_ilp(env, machine_ids, dummy_compute_cost,
+    sched = compute_schedule(*make_ilp(fgraph, machine_ids, dummy_compute_cost,
             dummy_comm_cost, dummy_ability, 100))
 
-    shapes = shape_of_variables(env, {var:(5,5) for var in env.inputs})
+    shapes = shape_of_variables(fgraph, {var:(5,5) for var in fgraph.inputs})
     shapes = {k.name : v for k,v in shapes.items()}
 
     d = gen_code(sched, 'envs.dat', shapes)
 
-    env_filename = d['env_filename']
-    assert env_filename == 'envs.dat'
-    envs = unpack_many(env_filename)
-    assert all(type(x) == theano.FunctionGraph for x in envs)
+    fgraph_filename = d['env_filename']
+    assert fgraph_filename == 'envs.dat'
+    fgraphs = unpack_many(fgraph_filename)
+    assert all(type(x) == theano.FunctionGraph for x in fgraphs)
 
     varinit = d['variable_initialization']
-    print [var.name for var in env.variables]
+    print [var.name for var in fgraph.variables]
     print varinit
-    assert all(var.name in varinit for var in env.variables
+    assert all(var.name in varinit for var in fgraph.variables
             if not is_output(var))
 
     recv_code = d['recv']
