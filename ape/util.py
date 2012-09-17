@@ -63,5 +63,6 @@ def merge_values(d, e):
 
     return {key: merge(d[key], e[key]) for key in d}
 
-def merge(d, e):
-    return dict(d.items() + e.items())
+def merge(*args):
+    return dict(sum([arg.items() for arg in args], []))
+
