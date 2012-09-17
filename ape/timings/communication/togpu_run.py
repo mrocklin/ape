@@ -3,7 +3,7 @@
 if __name__ == '__main__':
     import time
     from sys import argv, stdout
-    from ape.theano_gpu_util import cpu_to_gpu_var
+    from ape.timings.theano_gpu_util import cpu_to_gpu_var
     import theano
     import numpy as np
     import ast

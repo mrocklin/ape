@@ -1,4 +1,4 @@
-from ape.theano_gpu_util import *
+from ape.timings.theano_gpu_util import *
 import numpy as np
 import theano
 
