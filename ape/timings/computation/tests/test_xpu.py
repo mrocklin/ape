@@ -1,14 +1,14 @@
 import theano
-from ape.env_manip import fgraph_iter, clean_variables
+from ape.env_manip import fgraph_iter, clean_variable
 from ape.timings.computation.master import make_runtime_function
 
 def _test_comptime_dict_xpu(machines, machine_groups, comptime_dict_fn):
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
-    theano.gof.utils.give_variables_names((x,y), (z,))
-    clean_variables((x,y), (z,))
     fgraph = theano.FunctionGraph((x,y), (z,))
+    theano.gof.utils.give_variables_names(fgraph.variables)
+    map(clean_variable, fgraph.variables)
 
     times = comptime_dict_fn(fgraph, {x:(1000,1000), y:(1000,1000)}, 10,
                               machines, machine_groups)
