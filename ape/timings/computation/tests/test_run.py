@@ -2,7 +2,8 @@ from ape.timings.computation.run import comptime_run
 import theano
 from ape.util import dearrayify
 from theano.tensor.utils import shape_of_variables
-from ape.env_manip import clean_variable, fgraph_iter
+from ape.timings.util import fgraph_iter
+from ape.env_manip import clean_variable
 
 def test_comptime_run():
     x = theano.tensor.matrix('x')

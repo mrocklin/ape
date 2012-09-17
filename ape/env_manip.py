@@ -102,8 +102,3 @@ def clean_variable(var):
     var.name = var.name.replace('.', '_dot_')
     return var
 
-def fgraph_iter(fgraph):
-    """ Returns iterator of atomic funciton graphs - really just apply nodes"""
-    for node in fgraph.nodes:
-        nn = node.clone_with_new_inputs([inp.clone() for inp in node.inputs])
-        yield theano.FunctionGraph(nn.inputs, nn.outputs)

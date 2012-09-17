@@ -1,6 +1,6 @@
 from ape import ape_dir
 from ape.env_manip import pack_many
-from ape.env_manip import fgraph_iter
+from ape.timings.util import fgraph_iter
 from theano.tensor.utils import shape_of_variables
 import os
 import ast

@@ -48,13 +48,3 @@ def test_precedes():
     y = x+x
     z = y*y
     assert precedes(y.owner, z.owner)
-
-def test_fgraph_iter():
-    x = T.matrix('x')
-    y = x+x*x
-    fgraph = theano.FunctionGraph([x], [y])
-    fgraphs = fgraph_iter(fgraph)
-    assert all(isinstance(fg, theano.FunctionGraph) for fg in fgraphs)
-    assert all(var.name in map(str, fgraph.variables) for fg in fgraphs
-                                                      for var in fg.variables)
-
