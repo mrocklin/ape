@@ -49,14 +49,6 @@ def test_precedes():
     z = y*y
     assert precedes(y.owner, z.owner)
 
-def test_env_with_names():
-    x = T.matrix('x')
-    y = x+x*x
-    env = theano.FunctionGraph([x], [y])
-    env = env_with_names(env)
-    assert set(("x", "var_0", "var_1", "var_2")).issuperset(
-            {var.name for var in env.variables})
-
 def test_fgraph_iter():
     x = T.matrix('x')
     y = x+x*x

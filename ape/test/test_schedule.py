@@ -1,6 +1,6 @@
 from ape.theano_to_milp import (make_ilp, dummy_compute_cost, dummy_comm_cost,
         dummy_ability, compute_schedule)
-from ape.env_manip import env_with_names, unpack, unpack_many
+from ape.env_manip import unpack, unpack_many
 from theano.tensor.utils import  shape_of_variables
 from ape.schedule import gen_code, machine_dict_to_code, is_output
 
@@ -10,7 +10,7 @@ def test_gen_code_simple():
     x = theano.tensor.matrix('x')
     y = x+x*x
     env = theano.FunctionGraph([x], [y])
-    env = env_with_names(env)
+    theano.gof.graph.give_variables_names(env)
 
     machine_ids = ["ankaa", "mimosa"]
     _test_gen_code(env, machine_ids)
@@ -20,7 +20,7 @@ def test_gen_code_complex():
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, x) + y[:,0].sum() - x*y
     env = theano.FunctionGraph([x, y], [z])
-    env = env_with_names(env)
+    theano.gof.graph.give_variables_names(env)
     machine_ids = ["ankaa", "mimosa"]
 
     _test_gen_code(env, machine_ids)

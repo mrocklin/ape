@@ -116,15 +116,6 @@ def clean_variable(var):
     var.name = var.name.replace('.', '_dot_')
     return var
 
-def env_with_names(env):
-    ins, outs  = theano.gof.graph.clone(env.inputs, env.outputs)
-    env = theano.FunctionGraph(ins, outs)
-
-    for i, var in enumerate(variables_of(env)):
-        var.name = var.name or "var_%d"%i
-
-    return env
-
 def fgraph_iter(fgraph):
     """ Returns iterator of atomic funciton graphs - really just apply nodes"""
     for node in fgraph.nodes:

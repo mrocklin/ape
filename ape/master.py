@@ -1,9 +1,9 @@
 from theano.tensor.utils import shape_of_variables
-from ape.env_manip import env_with_names
 from ape.schedule import gen_code
 from ape.theano_to_milp import compute_schedule, make_ilp
 from ape import ape_dir
 from ape.util import dearrayify
+import theano
 
 def compile(env, machine_ids, compute_cost, comm_cost, ability,
         input_shapes, max_makespan):
@@ -22,7 +22,8 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     returns code to optimally compute env on the given machines
     """
     # Massage input FunctionGraph
-    env = env_with_names(env)
+    fgraph = fgraph.clone()
+    theano.gof.graph.give_variables_names(fgraph.variables)
 
     # TODO - this should be put somewhere else, perhaps in shape_of_variables?
     # Re-key input-shapes to the new vars in the env with names
