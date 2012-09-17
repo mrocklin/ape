@@ -1,5 +1,5 @@
 from ape.timings.computation.mpi import _compute_time_on_machine
-from ape.env_manip import clean_names
+from ape.env_manip import clean_variables
 import theano
 
 def _test_compute_time_on_machine(machine):
@@ -7,7 +7,7 @@ def _test_compute_time_on_machine(machine):
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x+1, 2*y)
     theano.gof.utils.give_variables_names((x,y), (z,))
-    clean_names((x, y), (z,))
+    clean_variables((x, y), (z,))
     fgraph = theano.FunctionGraph((x,y), (z,))
     input_shapes = {x:(1000,1000), y:(1000,1000)}
     niter = 3

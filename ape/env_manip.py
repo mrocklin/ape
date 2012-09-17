@@ -116,6 +116,7 @@ def clean_variables(inputs, outputs):
     Warning : Changes state! Not Pure!
     """
     all_variables = theano.gof.graph.variables(inputs, outputs)
+    for var in all_variables:
         var.name = _clean(var.name)
     return all_variables
 

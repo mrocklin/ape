@@ -1,6 +1,6 @@
 from theano.tensor.utils import shape_of_variables
 from theano.gof.fg import FunctionGraph as FunctionGraph
-from ape.env_manip import clean_names, math_optimize
+from ape.env_manip import clean_variables, math_optimize
 from ape.util import save_dict, load_dict
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
@@ -13,7 +13,7 @@ from kalman import inputs, outputs, input_shapes
 
 # give identifiers to all variables
 theano.gof.utils.give_variables_names(inputs, outputs)
-clean_names(inputs, outputs)
+clean_variables(inputs, outputs)
 
 fgraph = FunctionGraph(inputs, outputs)
 fgraph2 = math_optimize(fgraph)
