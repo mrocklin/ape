@@ -93,20 +93,6 @@ def precedes(a, b):
     """ does a directly precede b ? """
     return len(set(a.outputs).intersection(b.inputs)) != 0
 
-def variables_of(env):
-    """ Returns the variables of a FunctionGraph in a more predictable manner
-
-    This is an alternative to env.variables() which produces a set """
-    variables = [var for node in env.toposort()
-                     for var in node.inputs + node.outputs]
-    #variables = [var for node in env.toposort()
-    #                 for var in node.inputs] + env.outputs
-    out_variables = []
-    for var in variables:
-        if var not in out_variables:
-            out_variables.append(var)
-    return out_variables
-
 def clean_variable(var):
     """
     Remove troublesome syntax from names like '.'
