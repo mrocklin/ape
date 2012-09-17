@@ -113,7 +113,7 @@ def clean_variable(var):
 
     Warning : Changes state! Not Pure!
     """
-    var.name = var name.replace('.', '_dot_')
+    var.name = var.name.replace('.', '_dot_')
     return var
 
 def env_with_names(env):

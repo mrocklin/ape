@@ -16,7 +16,7 @@ def commtime_dict(network, *args, **kwargs):
         network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
     """
     networks = [fn(network, *args, **kwargs) for fn in commtime_dict_fns]
-    return merge(networks)
+    return merge(*networks)
 
 def _commtime_dict_interface(network):
     """
