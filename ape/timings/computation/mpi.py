@@ -1,5 +1,5 @@
 from ape import ape_dir
-from ape.env_manip import pack_many, env_with_names
+from ape.env_manip import pack_many
 from ape.env_manip import fgraph_iter
 from theano.tensor.utils import shape_of_variables
 import os
@@ -38,7 +38,7 @@ def _compute_time_on_machine(runfile, fgraph, input_shapes, machine, niter):
 
     if len(set(map(str, fgraph.variables))) != len(fgraph.variables):
         raise ValueError("Not all variables have unique names"
-                         "Look into ape.env_manip.variables_with_names")
+                         "Look into theano.gof.utils.give_variables_names")
 
     known_shapes = dearrayify(shape_of_variables(fgraph, input_shapes))
 

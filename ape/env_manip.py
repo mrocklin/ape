@@ -109,16 +109,14 @@ def variables_of(env):
 
 def _clean(name):
     return name.replace('.', '_dot_')
-def variables_with_names(inputs, outputs):
+def clean_variables(inputs, outputs):
     """
-    Name all variables between inputs and outputs
+    Remove troublesome syntax from names like '.'
 
     Warning : Changes state! Not Pure!
     """
     all_variables = theano.gof.graph.variables(inputs, outputs)
-    for i, var in enumerate(all_variables):
-        name = (var.name or "") + "_var_%d"%i
-        var.name = _clean(name)
+        var.name = _clean(var.name)
     return all_variables
 
 def env_with_names(env):

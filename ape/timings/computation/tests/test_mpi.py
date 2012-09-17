@@ -1,12 +1,13 @@
 from ape.timings.computation.mpi import _compute_time_on_machine
-from ape.env_manip import variables_with_names
+from ape.env_manip import clean_names
 import theano
 
 def _test_compute_time_on_machine(machine):
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x+1, 2*y)
-    variables_with_names((x,y), (z,))
+    theano.gof.utils.give_variables_names((x,y), (z,))
+    clean_names((x, y), (z,))
     fgraph = theano.FunctionGraph((x,y), (z,))
     input_shapes = {x:(1000,1000), y:(1000,1000)}
     niter = 3

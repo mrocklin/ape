@@ -1,6 +1,6 @@
 from theano.tensor.utils import shape_of_variables
 from theano.gof.fg import FunctionGraph as FunctionGraph
-from ape.env_manip import variables_with_names, math_optimize
+from ape.env_manip import clean_names, math_optimize
 from ape.util import save_dict, load_dict
 from ape.theano_to_milp import dummy_ability
 from ape.master import compile
@@ -11,7 +11,10 @@ from ape.timings.communication import commtime_dict, make_commtime_function
 from triple import machine_groups, network, machines
 from kalman import inputs, outputs, input_shapes
 
-variables_with_names(inputs, outputs) # give identifiers to all variables
+# give identifiers to all variables
+theano.gof.utils.give_variables_names(inputs, outputs)
+clean_names(inputs, outputs)
+
 fgraph = FunctionGraph(inputs, outputs)
 fgraph2 = math_optimize(fgraph)
 fgraph2_var_dict = {str(var): var for var in fgraph.variables}

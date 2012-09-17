@@ -2,13 +2,14 @@ from ape.timings.computation.run import comptime_run
 import theano
 from ape.util import dearrayify
 from theano.tensor.utils import shape_of_variables
-from ape.env_manip import variables_with_names, fgraph_iter
+from ape.env_manip import clean_names, fgraph_iter
 
 def test_comptime_run():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x, y)
-    variables_with_names((x,y), (z,))
+    theano.gof.utils.give_variables_names((x,y), (z,))
+    clean_names((x,y), (z,))
     fgraph = theano.FunctionGraph((x,y), (z,))
 
     input_shapes = {x: (10, 10), y: (10, 10)}

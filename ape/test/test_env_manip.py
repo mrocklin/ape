@@ -49,15 +49,6 @@ def test_precedes():
     z = y*y
     assert precedes(y.owner, z.owner)
 
-def test_variables_with_names():
-    x = T.matrix('x')
-    y = x+x*x
-    variables_with_names([x], [y]) # change state
-    variables = theano.gof.graph.variables([x],[y])
-
-    assert set(("x", "var_0", "var_1", "var_2")).issuperset(
-            {var.name for var in variables})
-
 def test_env_with_names():
     x = T.matrix('x')
     y = x+x*x
