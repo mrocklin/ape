@@ -20,7 +20,10 @@ new_Sigma.name = "updated_Sigma"
 inputs = [mu, Sigma, H, R, data]
 outputs = [new_mu, new_Sigma]
 
-n = 2000
+theano.gof.graph.utils.give_variables_names(
+        theano.gof.graph.variables(inputs, outputs))
+
+n = 500
 input_shapes = {mu:     (n, 1),
                 Sigma:  (n, n),
                 H:      (n, n),
