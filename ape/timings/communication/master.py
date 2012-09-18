@@ -59,7 +59,7 @@ def make_commtime_function(cdict, known_shapes):
             return 0
         if (sender, receiver) not in cdict:
             return 1e9
-        nbytes = bytes(outputs)
+        nbytes = bytes(var)
         intercept = cdict[sender, receiver]['intercept']
         slope     = cdict[sender, receiver]['slope']
         return slope*nbytes + intercept
