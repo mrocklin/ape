@@ -8,11 +8,15 @@ commtime_dict_fns = (commtime_dict_mpi, commtime_dict_togpu,
                      commtime_dict_fromgpu)
 
 def commtime_dict(network, *args, **kwargs):
-    """
-    inputs
+    """ Estimate communicaiton times within a network
+
+    Currently supported types:
+        'mpi', 'togpu', 'fromgpu'
+
+    inputs:
         network - dict like {(A, B): {'type': 'mpi'}}
 
-    outputs
+    outputs:
         network - dict like {(A, B): {'type': 'mpi', 'intercept':1, 'slope':2}}
     """
     networks = [fn(network, *args, **kwargs) for fn in commtime_dict_fns]
@@ -32,14 +36,13 @@ def _commtime_dict_interface(network):
 def make_commtime_function(cdict, known_shapes):
     """ Create callable function from a dict of intercept/slopes, known shapes
 
-    inputs
-    ------
-    cdict - dictionary mapping {(sender, receiver) : {'intercept':i, 'slope':s}}
-    input_shapes - dictionary from input variables to shapes :: {Tensor : shape}
+    inputs:
+        cdict - dict mapping {(sender, receiver) : {'intercept':i, 'slope':s}}
 
-    outputs
-    -------
-    commtime - function :: ApplyNode, Sender, Receiver -> time (float)
+        input_shapes - dict from input variables to shapes {TensorVar : shape}
+
+    outputs:
+        commtime - function :: (ApplyNode, sender, receiver) -> time (float)
     """
 
     bytes_fn = function_from_group_dict(cdict)
