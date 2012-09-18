@@ -53,13 +53,13 @@ def make_commtime_function(cdict, known_shapes):
         shape = known_shapes[str(var)]
         return prod(shape)*bytes_of_dtype(var.dtype)
 
-    def commtime(an, sender, receiver):
-        """ Returns the communication time to transmit the outputs of an """
+    def commtime(var, sender, receiver):
+        """ Returns the communication time to transmit a variable """
         if sender == receiver:
             return 0
         if (sender, receiver) not in cdict:
             return 1e9
-        nbytes = sum(map(bytes, an.outputs))
+        nbytes = bytes(outputs)
         intercept = cdict[sender, receiver]['intercept']
         slope     = cdict[sender, receiver]['slope']
         return slope*nbytes + intercept

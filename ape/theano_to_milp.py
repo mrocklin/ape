@@ -43,7 +43,7 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
     D = {(job, id) : compute_time(job, id)  for job in jobs
                                             for id in machine_ids}
 
-    C = {(job, id1, id2) : comm_time(job, id1, id2)
+    C = {(job, id1, id2) : sum(comm_time(var, id1, id2)  for var in job.outputs)
                                             for job in jobs
                                             for id1 in machine_ids
                                             for id2 in machine_ids}
