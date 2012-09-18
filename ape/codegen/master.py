@@ -5,13 +5,13 @@ from ape import ape_dir
 from ape.util import dearrayify
 import theano
 
-def compile(env, machine_ids, compute_cost, comm_cost, ability,
+def compile(fgraph, machine_ids, compute_cost, comm_cost, ability,
         input_shapes, max_makespan):
     """ Master function that takes
 
     inputs
     ------
-    env :: theano.FunctionGraph object - represents computational graph
+    fgraph :: theano.FunctionGraph object - represents computational graph
     machine_ids  :: [machine identifier] (iterable)
     compute_time :: theano.Apply, id     -> time (float)
     comm_time    :: theano.Apply, id, id -> time (float)
@@ -19,22 +19,22 @@ def compile(env, machine_ids, compute_cost, comm_cost, ability,
     input_shapes :: dict mapping input variable to shape
     max_time     :: time (float)
 
-    returns code to optimally compute env on the given machines
+    returns code to optimally compute fgraph on the given machines
     """
     # Massage input FunctionGraph
     fgraph = fgraph.clone()
-    theano.gof.graph.give_variables_names(fgraph.variables)
+    theano.gof.graph.utils.give_variables_names(fgraph.variables)
 
     # TODO - this should be put somewhere else, perhaps in shape_of_variables?
-    # Re-key input-shapes to the new vars in the env with names
-    name_to_var = {var.name : var for var in env.inputs}
+    # Re-key input-shapes to the new vars in the fgraph with names
+    name_to_var = {var.name : var for var in fgraph.inputs}
     input_shapes = {name_to_var[var.name] : input_shapes[var]
                         for var in input_shapes}
-    shapes = dearrayify(shape_of_variables(env, input_shapes))
+    shapes = dearrayify(shape_of_variables(fgraph, input_shapes))
     shapes = {k.name : v for k,v in shapes.items()}
 
     # Compute schedule using Integer programming
-    sched = compute_schedule(*make_ilp(env, machine_ids, compute_cost,
+    sched = compute_schedule(*make_ilp(fgraph, machine_ids, compute_cost,
             comm_cost, ability, 100))
 
     # Turn this schedule into python code
