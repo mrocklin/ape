@@ -17,7 +17,7 @@ def test_write_inputs():
     assert s == ("import numpy as np\n"
     "x = np.random.rand(*(10, 10)).astype('float32')\n"
     "y = np.random.rand(*(10, 10)).astype('float32')\n"
-    "inputs = (x, y)\n")
+    "inputs = (x, y,)\n")
 
 def test_read_inputs():
     test_write_inputs()

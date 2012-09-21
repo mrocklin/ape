@@ -107,9 +107,11 @@ def dag_to_fgraph(dag):
 
 fgraphs= {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
 
-from ape.codegen import write_input_file, write_rankfile, write_fgraph
+from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
+        write_hostfile)
 
 write_rankfile(rankfile, rootdir+"rankfile")
+write_hostfile(rankfile, rootdir+"hostfile")
 
 for machine, fgraph in fgraphs.items():
     write_fgraph(fgraph, rootdir+machine+".fgraph")
