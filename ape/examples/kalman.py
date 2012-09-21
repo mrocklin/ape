@@ -9,8 +9,8 @@ data = theano.tensor.matrix('data')
 
 dot = theano.tensor.dot
 
-A = dot(Sigma, H.T)
-B = R + dot(H, dot(Sigma, H.T))
+A = dot(Sigma, H.T); A.name = 'A'
+B = R + dot(H, dot(Sigma, H.T)); B.name = 'B'
 
 new_mu    = mu + dot(A, linalg.solve(B, dot(H, mu) - data))
 new_mu.name = "updated_mu"
