@@ -66,3 +66,5 @@ def merge_values(d, e):
 def merge(*args):
     return dict(sum([arg.items() for arg in args], []))
 
+def intersection(a, b):
+    return set(a).intersection(set(b))

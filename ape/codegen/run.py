@@ -11,8 +11,9 @@ fgraph = read_fgraph(filename_root+".fgraph")
 # Set up the compiler
 from theano.gof.sched import sort_schedule_fn
 from theano.tensor.io import mpi_cmps
-# TODO: Read in explicit schedule
-scheduler = sort_schedule_fn(*mpi_cmps)
+# TODO: job_schedule = read_schedule(filename_root+".schedule")
+# TODO: scheduler = explicit_schedule_fn(job_schedule)
+scheduler = sort_schedule_fn(*mpi_cmps) # TODO: remove
 linker = theano.OpWiseCLinker(schedule=scheduler)
 mode = theano.Mode(linker=linker, optimizer=None)
 
@@ -42,5 +43,3 @@ comm.barrier()
 endtime = time.time()
 if rank == 0:
     print "Duration: %f"%(endtime - starttime)
-
-

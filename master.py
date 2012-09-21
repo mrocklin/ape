@@ -3,6 +3,8 @@ from ape.examples.nfs_triple import machines, machine_groups, network
 import ape
 
 rootdir = 'tmp/'
+import os
+os.system('mkdir -p %s'%rootdir)
 
 fgraph = theano.FunctionGraph(inputs, outputs)
 # theano.gof.graph.utils.give_variables_names(fgraph.variables)
@@ -12,7 +14,7 @@ map(ape.env_manip.clean_variable, fgraph.variables)
 from ape import timings
 from theano.tensor.utils import shape_of_variables
 from ape.util import save_dict, load_dict, dearrayify
-recompute = False
+recompute = True
 if recompute:
     comps = timings.comptime_dict(fgraph, input_shapes, 5, machines,
             machine_groups)
@@ -43,20 +45,16 @@ def makeapply(inputs, op, output):
 def dag_commtime(job, a, b):
     inputs, op, output = job
     return commtime(output, a, b)
-    # return sum(commtime(output, a, b) for output in outputs)
 def dag_comptime(job, a):
     if job==dicdag.index:
         return 0
     return comptime(makeapply(*job), a)
 
-# Tompkins
+# Compute Schedule
 import tompkins
 dags, sched, makespan = tompkins.schedule(
         unidag, machines, dag_comptime, dag_commtime,
         lambda j:0, lambda j,a:1, 10)
-
-def intersection(a, b):
-    return set(a).intersection(set(b))
 
 def replace_send_recvs(dag):
     return tompkins.dag.replace_send_recv(dag,
@@ -97,6 +95,8 @@ def ith_output(fn, inputs, idx, old_var):
 full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
                         for m, dag in cleaner_dags.items()}
 
+# TODO: scheds = {machine: schedule}
+
 def dag_to_fgraph(dag):
     tdag = dicdag.remove_index_entries(dicdag.insert_single_indices(dag))
     inputs = dicdag.inputs_of(tdag)
@@ -107,6 +107,7 @@ def dag_to_fgraph(dag):
 
 fgraphs= {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
 
+# Code generation
 from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
         write_hostfile)
 
@@ -116,9 +117,4 @@ write_hostfile(rankfile, rootdir+"hostfile")
 for machine, fgraph in fgraphs.items():
     write_fgraph(fgraph, rootdir+machine+".fgraph")
     write_inputs(fgraph, rootdir+machine+".inputs", known_shape_strings)
-
-
-
-
-# TODO: scheds = {machine: schedule}
-# TODO: output files - fgraphs, inputs, rankfile, sched
+    # TODO: write_schedule(sched, rootdir+machine+".schedule")
