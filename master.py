@@ -105,7 +105,7 @@ def dag_to_fgraph(dag):
     tins, touts = theano.gof.graph.clone(tins, touts)
     return theano.FunctionGraph(tins, touts)
 
-fgraphs= {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
+fgraphs = {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
 
 # Code generation
 from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
@@ -118,3 +118,8 @@ for machine, fgraph in fgraphs.items():
     write_fgraph(fgraph, rootdir+machine+".fgraph")
     write_inputs(fgraph, rootdir+machine+".inputs", known_shape_strings)
     # TODO: write_schedule(sched, rootdir+machine+".schedule")
+
+print ("Run using:\n\t"
+        "mpiexec -np %(num_hosts)d -hostfile %(rootdir)shostfile"
+        "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
+            'num_hosts': len(fgraphs), 'rootdir': rootdir}
