@@ -2,6 +2,8 @@ from ape.examples.kalman import *
 from ape.examples.nfs_triple import machines, machine_groups, network
 import ape
 
+rootdir = 'tmp/'
+
 fgraph = theano.FunctionGraph(inputs, outputs)
 # theano.gof.graph.utils.give_variables_names(fgraph.variables)
 map(ape.env_manip.clean_variable, fgraph.variables)
@@ -9,20 +11,21 @@ map(ape.env_manip.clean_variable, fgraph.variables)
 # Timings
 from ape import timings
 from theano.tensor.utils import shape_of_variables
-from ape.util import save_dict, load_dict
+from ape.util import save_dict, load_dict, dearrayify
 recompute = False
 if recompute:
     comps = timings.comptime_dict(fgraph, input_shapes, 5, machines,
             machine_groups)
     comms = timings.commtime_dict(network)
-    save_dict('tmp/comps.dat', comps)
-    save_dict('tmp/comms.dat', comms)
+    save_dict(rootdir+'comps.dat', comps)
+    save_dict(rootdir+'comms.dat', comms)
 else:
-    comps = load_dict('tmp/comps.dat')
-    comms = load_dict('tmp/comms.dat')
+    comps = load_dict(rootdir+'comps.dat')
+    comms = load_dict(rootdir+'comms.dat')
 
 comptime = timings.make_runtime_function(comps)
 known_shapes = shape_of_variables(fgraph, input_shapes)
+known_shapes = {k:tuple(map(dearrayify, v)) for k,v in known_shapes.items()}
 known_shape_strings = {str(k): v for k, v in known_shapes.items()}
 commtime = timings.make_commtime_function(comms, known_shapes)
 
@@ -66,7 +69,7 @@ cleaner_dags = {machine: replace_send_recvs(dag)
 rankfile = {machine: i for i, machine in enumerate(dags)}
 tagfile  = {var: i for i, var in enumerate(map(str, fgraph.variables))}
 
-# TODO: Sends to MPI
+# Sends to MPI
 # TODO needs unit test
 def ith_output(fn, inputs, idx, old_var):
     from tompkins.dag import issend, isrecv
@@ -103,3 +106,17 @@ def dag_to_fgraph(dag):
     return theano.FunctionGraph(tins, touts)
 
 fgraphs= {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
+
+from ape.codegen import write_input_file, write_rankfile, write_fgraph
+
+write_rankfile(rankfile, rootdir+"rankfile")
+
+for machine, fgraph in fgraphs.items():
+    write_fgraph(fgraph, rootdir+machine+".fgraph")
+    write_inputs(fgraph, rootdir+machine+".inputs", known_shape_strings)
+
+
+
+
+# TODO: scheds = {machine: schedule}
+# TODO: output files - fgraphs, inputs, rankfile, sched

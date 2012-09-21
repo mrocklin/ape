@@ -1,11 +1,11 @@
 from ape.mpi_prelude import *
+from ape.codegen import read_fgraph, read_inputs
 import theano
 
+filename_root = 'tmp/'+host
+
 # Unpack envs/jobs from file
-from ape.env_manip import unpack
-filename = host+".fgraph"
-file = open(filename, 'r')
-fgraph = unpack(file); file.close()
+fgraph = read_fgraph(filename_root+".fgraph")
 
 # Set up the compiler
 from theano.gof.sched import scheduler
@@ -21,8 +21,7 @@ f = theano.function(inputs, outputs, mode=mode)
 print "Compilation on "+host+" finished"
 
 # Initialize variables
-import_string = "from %s import inputs"%host.replace('.', '_')
-exec(import_string)
+inputs = read_inputs(filename_root+".inputs")
 print "Initialization on "+host+" finished"
 
 # Wait for everyone to finish compiling and setting up receives
