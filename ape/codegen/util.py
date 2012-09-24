@@ -38,3 +38,26 @@ def read_fgraph(filename):
     fgraph = unpack(file)
     file.close()
     return fgraph
+
+def write_sched(sched, filename):
+    file = open(filename, 'w')
+    for node in sched:
+        file.write(str(node)+'\n')
+    file.close()
+
+def read_sched(filename):
+    file = open(filename, 'r')
+    lines = map(lambda s: s.strip(), file.readlines())
+    file.close()
+    return lines
+
+def sched_to_cmp(sched):
+    schedstr = map(str, sched)
+    def schedule_cmp(a, b):
+        try:
+            aind = schedstr.index(str(a))
+            bind = schedstr.index(str(b))
+            return cmp(aind, bind)
+        except ValueError:
+            return 0
+    return schedule_cmp

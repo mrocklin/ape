@@ -1,6 +1,6 @@
 import theano
 from ape.codegen.util import (write_inputs, write_rankfile, read_inputs,
-        write_fgraph, read_fgraph)
+        write_fgraph, read_fgraph, write_sched, read_sched, sched_to_cmp)
 import os
 
 input_filename = 'testinputs'
@@ -11,7 +11,7 @@ def test_write_inputs():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.FunctionGraph((x,y), (z,))
+    fgraph = theano.functiongraph((x,y), (z,))
     write_inputs(fgraph, fname, {'x': (10, 10), 'y':(10, 10)})
     file = open(fname); s = file.read(); file.close()
     assert s == ("import numpy as np\n"
@@ -27,22 +27,45 @@ def test_read_inputs():
 
 def test_write_rankfile():
     fname = testdir + "test_rankfile"
-    rankfile = {"A": 0, "B": 2, "C": 1}
+    rankfile = {"a": 0, "b": 2, "c": 1}
     write_rankfile(rankfile, fname)
     file = open(fname); s = file.read(); file.close()
     assert s == (
-            "rank 0=A slot=0\n"
-            "rank 1=C slot=0\n"
-            "rank 2=B slot=0\n")
+            "rank 0=a slot=0\n"
+            "rank 1=c slot=0\n"
+            "rank 2=b slot=0\n")
 
 def test_read_write_fgraph():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.FunctionGraph((x,y), (z,))
+    fgraph = theano.functiongraph((x,y), (z,))
 
     fname = testdir + "test_read_write_fgraph"
     write_fgraph(fgraph, fname)
     fgraph2 = read_fgraph(fname)
     assert str(fgraph) == str(fgraph2)
-    assert isinstance(fgraph2, theano.FunctionGraph)
+    assert isinstance(fgraph2, theano.functiongraph)
+
+def _test_sched():
+    x = theano.tensor.matrix('x', dtype='float32')
+    y = theano.tensor.matrix('y', dtype='float32')
+    a = x + y
+    b = x * y
+    c = x ** y
+    an, bn, cn = a.owner, b.owner, c.owner
+    sched = [an, bn, cn]
+    return sched
+
+def test_sched_to_cmp():
+    sched = an, bn, cn = _test_sched()
+    cmp = sched_to_cmp(sched)
+    assert cmp(an, bn) < 0 and cmp(cn, an) > 0
+
+def test_write_sched():
+    sched = _test_sched()
+    fname = testdir + "test_write_sched"
+    write_sched(sched, fname)
+    file = open(fname);
+    assert len(file.readlines()) == 3
+    file.close()

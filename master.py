@@ -14,7 +14,7 @@ map(ape.env_manip.clean_variable, fgraph.variables)
 from ape import timings
 from theano.tensor.utils import shape_of_variables
 from ape.util import save_dict, load_dict, dearrayify
-recompute = True
+recompute = False
 if recompute:
     comps = timings.comptime_dict(fgraph, input_shapes, 5, machines,
             machine_groups)
@@ -64,6 +64,10 @@ def replace_send_recvs(dag):
 cleaner_dags = {machine: replace_send_recvs(dag)
                     for machine, dag in dags.items()}
 
+scheds = {machine: tuple(makeapply(*job) for job, time, m in sched
+                                         if m == machine)
+                    for _, _, machine in sched}
+
 rankfile = {machine: i for i, machine in enumerate(dags)}
 tagfile  = {var: i for i, var in enumerate(map(str, fgraph.variables))}
 
@@ -95,8 +99,6 @@ def ith_output(fn, inputs, idx, old_var):
 full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
                         for m, dag in cleaner_dags.items()}
 
-# TODO: scheds = {machine: schedule}
-
 def dag_to_fgraph(dag):
     tdag = dicdag.remove_index_entries(dicdag.insert_single_indices(dag))
     inputs = dicdag.inputs_of(tdag)
@@ -109,7 +111,7 @@ fgraphs = {machine: dag_to_fgraph(dag) for machine, dag in full_dags.items()}
 
 # Code generation
 from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
-        write_hostfile)
+        write_hostfile, write_sched)
 
 write_rankfile(rankfile, rootdir+"rankfile")
 write_hostfile(rankfile, rootdir+"hostfile")
@@ -117,9 +119,10 @@ write_hostfile(rankfile, rootdir+"hostfile")
 for machine, fgraph in fgraphs.items():
     write_fgraph(fgraph, rootdir+machine+".fgraph")
     write_inputs(fgraph, rootdir+machine+".inputs", known_shape_strings)
-    # TODO: write_schedule(sched, rootdir+machine+".schedule")
+for machine, sched  in  scheds.items():
+    write_sched( sched,  rootdir+machine+".sched")
 
 print ("Run using:\n\t"
-        "mpiexec -np %(num_hosts)d -hostfile %(rootdir)shostfile"
+        "mpiexec -np %(num_hosts)d -hostfile %(rootdir)shostfile "
         "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
             'num_hosts': len(fgraphs), 'rootdir': rootdir}

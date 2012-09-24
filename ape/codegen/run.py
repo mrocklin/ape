@@ -1,19 +1,20 @@
 from ape.mpi_prelude import *
-from ape.codegen import read_fgraph, read_inputs
+from ape.codegen import read_fgraph, read_inputs, read_sched, sched_to_cmp
 import theano
 
 print "Hello from ", host
 filename_root = 'tmp/'+host
 
 # Unpack envs/jobs from file
+print filename_root+".sched"
 fgraph = read_fgraph(filename_root+".fgraph")
 
 # Set up the compiler
 from theano.gof.sched import sort_schedule_fn
 from theano.tensor.io import mpi_cmps
-# TODO: job_schedule = read_schedule(filename_root+".schedule")
-# TODO: scheduler = explicit_schedule_fn(job_schedule)
-scheduler = sort_schedule_fn(*mpi_cmps) # TODO: remove
+
+sched_cmp = sched_to_cmp(read_sched(filename_root+".sched"))
+scheduler = sort_schedule_fn(sched_cmp, *mpi_cmps)
 linker = theano.OpWiseCLinker(schedule=scheduler)
 mode = theano.Mode(linker=linker, optimizer=None)
 
