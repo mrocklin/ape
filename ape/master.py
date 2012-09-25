@@ -78,7 +78,7 @@ def run_command(rankfile,  rootdir):
         "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
-def distribute(inputs, outputs, input_shapes, machines, commtime, comptime):
+def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=1e99):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
 
@@ -96,7 +96,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime):
     # Compute Schedule
     dags, sched, makespan = tompkins.schedule(
             unidag, machines, dag_comptime, dag_commtime,
-            lambda j:0, lambda j,a:1, 10)
+            lambda j:0, lambda j,a:1, makespan)
 
     cleaner_dags = {machine: replace_send_recvs(dag)
                         for machine, dag in dags.items()}
