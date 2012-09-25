@@ -34,7 +34,8 @@ def cpu_to_gpu_graph(inputs, outputs):
     outputs2 = theano.clone(outputs, replace=dict(zip(inputs, cpu_inputs)))
     gpu_outputs = map(theano.sandbox.cuda.basic_ops.gpu_from_host, outputs2)
     for go, co in zip(gpu_outputs, outputs2):
-        go.name = "gpu_"+co.name
+        if co.name:
+            go.name = "gpu_"+co.name
     final_outputs = map(lambda o: theano.Out(o, borrow=True), gpu_outputs)
 
     return tuple(gpu_inputs), tuple(gpu_outputs)
