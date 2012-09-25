@@ -11,7 +11,7 @@ def test_write_inputs():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.functiongraph((x,y), (z,))
+    fgraph = theano.FunctionGraph((x,y), (z,))
     write_inputs(fgraph, fname, {'x': (10, 10), 'y':(10, 10)})
     file = open(fname); s = file.read(); file.close()
     assert s == ("import numpy as np\n"
@@ -39,13 +39,13 @@ def test_read_write_fgraph():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.functiongraph((x,y), (z,))
+    fgraph = theano.FunctionGraph((x,y), (z,))
 
     fname = testdir + "test_read_write_fgraph"
     write_fgraph(fgraph, fname)
     fgraph2 = read_fgraph(fname)
     assert str(fgraph) == str(fgraph2)
-    assert isinstance(fgraph2, theano.functiongraph)
+    assert isinstance(fgraph2, theano.FunctionGraph)
 
 def _test_sched():
     x = theano.tensor.matrix('x', dtype='float32')
