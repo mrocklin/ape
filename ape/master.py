@@ -78,7 +78,7 @@ def run_command(rankfile,  rootdir):
         "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
-def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=1e99):
+def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
 
