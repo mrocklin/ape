@@ -1,5 +1,5 @@
 from ape.mpi_prelude import *
-from ape.codegen import read_fgraph, read_inputs, read_sched, sched_to_cmp
+from ape.codegen import read_graph, read_inputs, read_sched, sched_to_cmp
 import theano
 
 print "Hello from ", host
@@ -7,7 +7,7 @@ filename_root = 'tmp/'+host
 
 # Unpack envs/jobs from file
 print filename_root+".sched"
-fgraph = read_fgraph(filename_root+".fgraph")
+graph = read_graph(filename_root+".fgraph")
 
 # Set up the compiler
 from theano.gof.sched import sort_schedule_fn
@@ -19,7 +19,7 @@ linker = theano.OpWiseCLinker(schedule=scheduler)
 mode = theano.Mode(linker=linker, optimizer=None)
 
 # Compile
-inputs, outputs = theano.gof.graph.clone(fgraph.inputs, fgraph.outputs)
+inputs, outputs = theano.gof.graph.clone(graph.inputs, graph.outputs)
 f = theano.function(inputs, outputs, mode=mode)
 print "\nCompilation on "+host+" finished"
 for node in f.maker.linker.make_all()[-1]:

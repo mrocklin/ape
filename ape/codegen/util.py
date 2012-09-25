@@ -1,13 +1,14 @@
 from ape.env_manip import pack, unpack
+import theano
 
-def write_inputs(fgraph, filename, known_shape_strings):
+def write_inputs((inputs, outputs), filename, known_shape_strings):
     file = open(filename, 'w')
     file.write('import numpy as np\n')
-    for input in fgraph.inputs:
+    for input in inputs:
         file.write("%s = np.random.rand(*%s).astype('%s')\n"%(input.name,
             known_shape_strings[input.name], input.dtype))
 
-    file.write('inputs = (%s,)\n'%(', '.join(i.name for i in fgraph.inputs)))
+    file.write('inputs = (%s,)\n'%(', '.join(i.name for i in inputs)))
     file.close()
 
 def read_inputs(filename):
@@ -28,12 +29,13 @@ def write_hostfile(machines, filename):
         file.write("%s\n"%machine)
     file.close()
 
-def write_fgraph(fgraph, filename):
+def write_graph((inputs, outputs), filename):
+    fgraph = theano.FunctionGraph(*theano.gof.graph.clone(inputs, outputs))
     file = open(filename, 'w')
     pack(fgraph, file)
     file.close()
 
-def read_fgraph(filename):
+def read_graph(filename):
     file = open(filename, 'r')
     fgraph = unpack(file)
     file.close()
