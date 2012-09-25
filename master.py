@@ -1,17 +1,24 @@
 import os
 import dicdag
 import ape
+import theano
 import tompkins
-from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
+from ape.codegen import (write_inputs, write_rankfile, write_graph,
         write_hostfile, write_sched)
 
-# Timings
 from ape import timings
 from ape.theano_util import shape_of_variables
 from ape.util import save_dict, load_dict, dearrayify
 
-# DicDag conversion
+def sanitize(inputs, outputs):
+    """ Ensure that all variables have valid names """
+    variables = theano.gof.graph.variables(inputs, outputs)
+    theano.gof.graph.utils.give_variables_names(variables)
+    map(ape.env_manip.clean_variable, variables)
+    assert all(var.name for var in variables)
+
 def makeapply(inputs, op, output):
+    """ Turn a unidag job (from tompkins) into a theano apply node """
     inputs = map(lambda x: x.clone(), inputs)
     outputs = (output.clone(), )
     return theano.Apply(op, inputs, outputs)
@@ -47,7 +54,7 @@ def make_ith_output(rankfile, tagfile, known_shapes):
         return dicdag.theano.theano_dag.ith_output(fn, inputs, idx, old_var)
     return ith_output
 
-def dag_to_fgraph(dag, ith_output):
+def dag_to_theano_graph(dag, ith_output):
     tdag = dicdag.dag_to_tdag(dag)
     inputs = dicdag.inputs_of(tdag)
     outputs = dicdag.outputs_of(tdag)
@@ -55,14 +62,14 @@ def dag_to_fgraph(dag, ith_output):
     tins, touts = theano.gof.graph.clone(tins, touts)
     return theano.FunctionGraph(tins, touts)
 
-def write(fgraphs, scheds, rankfile, rootdir, known_shapes):
+def write(graphs, scheds, rankfile, rootdir, known_shapes):
     known_shape_strings = {str(k): v for k, v in known_shapes.items()}
     write_rankfile(rankfile, rootdir+"rankfile")
     write_hostfile(rankfile, rootdir+"hostfile")
 
-    for machine, fgraph in fgraphs.items():
-        write_fgraph(fgraph, rootdir+machine+".fgraph")
-        write_inputs(fgraph, rootdir+machine+".inputs", known_shape_strings)
+    for machine, graph in graphs.items():
+        write_graph(graph, rootdir+machine+".fgraph")
+        write_inputs(graph, rootdir+machine+".inputs", known_shape_strings)
     for machine, sched  in  scheds.items():
         write_sched( sched,  rootdir+machine+".sched")
 
@@ -76,10 +83,7 @@ def blah(inputs, outputs, commtime, comptime, input_shapes):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
 
-    assert all(var.name for var in variables)
-    map(ape.env_manip.clean_variable, variables)
-
-    dag, dinputs, doutputs = dicdag.theano.fgraph_to_dag(fgraph)
+    dag, dinputs, doutputs = dicdag.theano.theano_graph_to_dag(inputs, outputs)
     unidag = dicdag.unidag.dag_to_unidag(dag)
 
     def dag_commtime(job, a, b):
@@ -105,26 +109,29 @@ def blah(inputs, outputs, commtime, comptime, input_shapes):
                         for _, _, machine in sched}
 
     rankfile = {machine: i for i, machine in enumerate(dags)}
-    tagfile  = {var: i for i, var in enumerate(map(str, fgraph.variables))}
+    tagfile  = {var: i for i, var in enumerate(map(str, variables))}
 
     ith_output = make_ith_output(rankfile, tagfile, known_shapes)
 
-    fgraphs = {machine: dag_to_fgraph(dag, ith_output)
-                        for machine, dag in full_dags.items()}
+    theano_graphs = {machine: dag_to_theano_graph(dag, ith_output)
+                            for machine, dag in full_dags.items()}
 
-    return fgraphs, scheds, rankfile
+    return theano_graphs, scheds, rankfile
 
 if __name__ == '__main__':
-    from ape.examples.kalman import *
+    from ape.examples.kalman import inputs, outputs, input_shapes
     from ape.examples.triple import machines, machine_groups, network
     rootdir = 'tmp/'
     os.system('mkdir -p %s'%rootdir)
 
-    fgraph = theano.FunctionGraph(*theano.gof.graph.clone(inputs, outputs))
+    # sanitize
+    sanitize(inputs, outputs)
+
+    # do timings if necessary
     recompute = True
     if recompute:
-        comps = timings.comptime_dict(fgraph, input_shapes, 5, machines,
-                machine_groups)
+        comps = timings.comptime_dict(inputs, outputs, input_shapes, 5,
+                                      machines, machine_groups)
         comms = timings.commtime_dict(network)
         save_dict(rootdir+'comps.dat', comps)
         save_dict(rootdir+'comms.dat', comms)
@@ -132,7 +139,10 @@ if __name__ == '__main__':
         comps = load_dict(rootdir+'comps.dat')
         comms = load_dict(rootdir+'comms.dat')
 
+    known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     comptime = timings.make_runtime_function(comps)
     commtime = timings.make_commtime_function(comms, known_shapes)
 
-    fgraphs, scheds, rankfile = blah(fgraph, commtime, comptime, input_shapes)
+    # Break up graph
+    theano_graphs, scheds, rankfile = blah(inputs, outputs,
+                                           commtime, comptime, input_shapes)
