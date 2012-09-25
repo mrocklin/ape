@@ -4,11 +4,12 @@ from ape.util import merge
 
 comptime_dict_fns = [comptime_dict_cpu, comptime_dict_gpu]
 
-def comptime_dict(fgraph, input_shapes, niter, machines, machine_groups=None):
+def comptime_dict(i, o, input_shapes, niter, machines, machine_groups=None):
     """ Estimate record average computation times of tasks in a graph
 
     inputs:
-        fgraph          - a theano.FunctionGraph describing the computation
+        i               - a theano.FunctionGraph describing the computation
+        o               - a theano.FunctionGraph describing the computation
         input_shapes    - a dict {var: (shape)} for each input variable
         niter           - the number of times to run each computation
         machines        - a list of machines on which to run each computation
@@ -22,7 +23,7 @@ def comptime_dict(fgraph, input_shapes, niter, machines, machine_groups=None):
         make_runtime_function   - converts the output of this function into a
                                 - callable function
     """
-    dicts = (fn(fgraph, input_shapes, niter, machines, machine_groups)
+    dicts = (fn(i, o, input_shapes, niter, machines, machine_groups)
              for fn in comptime_dict_fns)
     return merge(*dicts)
 
