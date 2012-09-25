@@ -7,13 +7,15 @@ def test_cpu_to_gpu_graph():
         return
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
-    z = theano.tensor.dot(x,y)
+    z = theano.tensor.dot(x,y); z.name = 'z'
     inputs = (x,y)
     outputs = (z,)
     gpu_inputs, gpu_outputs = cpu_to_gpu_graph(inputs, outputs)
     f = theano.function(gpu_inputs, gpu_outputs)
     assert all(isinstance(inp, theano.sandbox.cuda.CudaNdarrayVariable)
                 for inp in (gpu_inputs+gpu_outputs))
+    assert 'gpu' in gpu_outputs[0].name and 'z' in gpu_outputs[0].name
+
 
 def test_togpu_tocpu_data():
     if theano.config.device != 'gpu':
