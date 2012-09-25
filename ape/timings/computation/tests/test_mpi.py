@@ -17,7 +17,7 @@ def _test_compute_time_on_machine(machine):
     times = _compute_time_on_machine('ape/timings/computation/run_cpu.py',
                                      fgraph, input_shapes, machine, niter)
     assert isinstance(times, dict)
-    assert set(map(str, fgraph.nodes)) == set(times.keys())
+    assert set(map(str, fgraph.apply_nodes)) == set(times.keys())
     assert all(isinstance(val, float) for val in times.values())
 
 def test_nfs():

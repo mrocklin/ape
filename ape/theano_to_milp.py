@@ -34,7 +34,7 @@ def make_ilp(env, machine_ids, compute_time, comm_time, ability, max_time):
 
     """
 
-    jobs = list(env.nodes)
+    jobs = list(env.apply_nodes)
 
     P = {(job1, job2): precedes(job1, job2) for job1 in jobs for job2 in jobs}
 

@@ -16,7 +16,7 @@ def _test_comptime_dict_xpu(machines, machine_groups, comptime_dict_fn):
     assert isinstance(times, dict)
     assert set(times.keys()) == set(machine_groups)
     # The keys of the subdicts are apply nodes
-    assert all(all(key in map(str, fgraph.nodes) for key in d)
+    assert all(all(key in map(str, fgraph.apply_nodes) for key in d)
                for d in times.values())
     # The values of the subdicts are floats
     assert all(all(isinstance(val, float) for val in d.values())
@@ -24,5 +24,5 @@ def _test_comptime_dict_xpu(machines, machine_groups, comptime_dict_fn):
 
     runtime = make_runtime_function(times)
     assert all(isinstance(runtime(n, machine), float)
-                for n in fgraph.nodes
+                for n in fgraph.apply_nodes
                 for machine in machines)

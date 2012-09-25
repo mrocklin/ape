@@ -56,4 +56,4 @@ def _compute_time_on_machine(runfile, fgraph, input_shapes, machine, niter):
     # return stdout.read() + stderr.read()
     message = stdout.read()
     times = ast.literal_eval(message)
-    return  dict(zip(map(str, fgraph.nodes), times))
+    return  dict(zip(map(str, fgraph.apply_nodes), times))

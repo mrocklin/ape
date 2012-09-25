@@ -1,5 +1,5 @@
 from ape.examples.kalman import *
-from ape.examples.nfs_triple import machines, machine_groups, network
+from ape.examples.triple import machines, machine_groups, network
 import ape
 
 rootdir = 'tmp/'
@@ -14,7 +14,7 @@ map(ape.env_manip.clean_variable, fgraph.variables)
 from ape import timings
 from theano.tensor.utils import shape_of_variables
 from ape.util import save_dict, load_dict, dearrayify
-recompute = False
+recompute = True
 if recompute:
     comps = timings.comptime_dict(fgraph, input_shapes, 5, machines,
             machine_groups)
@@ -64,6 +64,10 @@ def replace_send_recvs(dag):
 cleaner_dags = {machine: replace_send_recvs(dag)
                     for machine, dag in dags.items()}
 
+gpu_machines = filter(lambda m: m[-4:] == '-gpu', machines)
+
+dags_with_merged_gpus = gpu_dags_merge(cleaner_dags)
+
 scheds = {machine: tuple(makeapply(*job) for job, time, m in sched
                                          if m == machine)
                     for _, _, machine in sched}
@@ -100,7 +104,7 @@ full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
                         for m, dag in cleaner_dags.items()}
 
 def dag_to_fgraph(dag):
-    tdag = dicdag.remove_index_entries(dicdag.insert_single_indices(dag))
+    tdag = dicdag.dag_to_tdag(dag)
     inputs = dicdag.inputs_of(tdag)
     outputs = dicdag.outputs_of(tdag)
     tins, touts = dicdag.tuple_dag_to_graph(tdag, inputs, outputs, ith_output)
