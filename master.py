@@ -66,8 +66,6 @@ cleaner_dags = {machine: replace_send_recvs(dag)
 
 gpu_machines = filter(lambda m: m[-4:] == '-gpu', machines)
 
-dags_with_merged_gpus = gpu_dags_merge(cleaner_dags)
-
 scheds = {machine: tuple(makeapply(*job) for job, time, m in sched
                                          if m == machine)
                     for _, _, machine in sched}
