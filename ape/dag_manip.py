@@ -18,7 +18,7 @@ def non_comm_dag(dag):
 inputs_of  = lambda dag: dicdag.inputs_of( dicdag.dag_to_tdag(dag))
 outputs_of = lambda dag: dicdag.outputs_of(dicdag.dag_to_tdag(dag))
 
-def internal_gpu_fgraph(dag):
+def internal_gpu_theano_graph(dag):
     """
 
     inputs - a dicdag with send/recvs

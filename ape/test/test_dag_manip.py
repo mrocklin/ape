@@ -19,16 +19,14 @@ def test_non_comm_dag():
     assert recvd == {a}
     assert non_comm == {b: {'fn': "add", 'args': (a, c)}}
 
-def test_internal_gpu_fgraph():
+def test_internal_gpu_theano_graph():
     x = theano.tensor.matrix('x')
     y = x + x; y.name = 'y'
-    dag, inputs, outputs = dicdag.theano.fgraph_to_dag(
-            theano.FunctionGraph(
-                *theano.gof.graph.clone((x,), (y,))))
+    dag, inputs, outputs = dicdag.theano.theano_graph_to_dag((x,), (y,))
     recv = {x: {'fn': ("recv", "A"), 'args':()}}
     send = {'t_y': {'fn': ("send", "A"), 'args': (y,)}}
     comm_dag = merge(dag, send, recv)
-    gins, gouts = internal_gpu_fgraph(comm_dag)
+    gins, gouts = internal_gpu_theano_graph(comm_dag)
     assert all(isinstance(var, theano.sandbox.cuda.var.CudaNdarrayVariable)
             for var in gins+gouts)
 
