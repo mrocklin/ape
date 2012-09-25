@@ -7,6 +7,20 @@ def test_is_gpu_machine():
     assert is_gpu_machine('baconost.cs.uchicago.edu-gpu')
     assert not is_gpu_machine('baconost.cs.uchicago.edu')
 
+def _comm_dag():
+    x = theano.tensor.matrix('x')
+    y = x + x; y.name = 'y'
+    dag, inputs, outputs = dicdag.theano.theano_graph_to_dag((x,), (y,))
+    recv = {x: {'fn': ("recv", "A"), 'args':()}}
+    send = {'t_y': {'fn': ("send", "A"), 'args': (y,)}}
+    comm_dag = merge(dag, send, recv)
+    return dag, comm_dag, inputs, outputs
+
+def test_non_comm_dag_real():
+    dag, comm_dag, inputs, outputs = _comm_dag()
+    dag2, sent, recvd = non_comm_dag(comm_dag)
+    assert dag == dag2
+
 def test_non_comm_dag():
     a,b,c,d,e = 'abcde'
     A,B,C,D,E = 'ABCDE'
@@ -20,15 +34,13 @@ def test_non_comm_dag():
     assert non_comm == {b: {'fn': "add", 'args': (a, c)}}
 
 def test_internal_gpu_theano_graph():
-    x = theano.tensor.matrix('x')
-    y = x + x; y.name = 'y'
-    dag, inputs, outputs = dicdag.theano.theano_graph_to_dag((x,), (y,))
-    recv = {x: {'fn': ("recv", "A"), 'args':()}}
-    send = {'t_y': {'fn': ("send", "A"), 'args': (y,)}}
-    comm_dag = merge(dag, send, recv)
+    dag, comm_dag, inputs, outputs = _comm_dag()
+
     gins, gouts = internal_gpu_theano_graph(comm_dag)
     assert all(isinstance(var, theano.sandbox.cuda.var.CudaNdarrayVariable)
             for var in gins+gouts)
+    assert all(isinstance(n.op, theano.sandbox.cuda.GpuOp)
+                    for n in theano.gof.graph.list_of_nodes(gins, gouts))
 
     assert gins[0].name == 'gpu_x'
     assert gouts[0].name == 'gpu_y'
