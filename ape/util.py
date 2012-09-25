@@ -68,3 +68,6 @@ def merge(*args):
 
 def intersection(a, b):
     return set(a).intersection(set(b))
+
+def unique(c):
+    return len(c) == len(set(c))
