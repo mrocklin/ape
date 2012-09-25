@@ -7,7 +7,7 @@ from ape.codegen import (write_inputs, write_rankfile, write_fgraph,
 
 # Timings
 from ape import timings
-from theano.tensor.utils import shape_of_variables
+from ape.theano_util import shape_of_variables
 from ape.util import save_dict, load_dict, dearrayify
 
 # DicDag conversion
@@ -73,11 +73,11 @@ def run_command(rankfile,  rootdir):
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
 def blah(inputs, outputs, commtime, comptime, input_shapes):
-    fgraph = theano.FunctionGraph(inputs, outputs)
-    known_shapes = shape_of_variables(fgraph, input_shapes)
-    known_shapes = {k:tuple(map(dearrayify, v)) for k,v in known_shapes.items()}
-    assert all(var.name for var in fgraph.variables)
-    map(ape.env_manip.clean_variable, fgraph.variables)
+    known_shapes = shape_of_variables(inputs, outputs, input_shapes)
+    variables = theano.gof.graph.variables(inputs, outputs)
+
+    assert all(var.name for var in variables)
+    map(ape.env_manip.clean_variable, variables)
 
     dag, dinputs, doutputs = dicdag.theano.fgraph_to_dag(fgraph)
     unidag = dicdag.unidag.dag_to_unidag(dag)
