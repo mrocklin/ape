@@ -25,7 +25,7 @@ def make_apply(inputs, op, output):
 
 def replace_send_recvs(dag):
     return tompkins.dag.replace_send_recv(dag,
-        lambda A, B, (a,b,fout), c : ((fout,), ("send", B), ("t_"+fout.name,)),
+        lambda A, B, (a,b,fout), c : ((fout,), ("send", B), "t_"+fout.name),
         lambda A, B, (a,b,fout), c : ((), ("recv", A), fout))
 
 def make_ith_output(rankfile, tagfile, known_shapes):
@@ -78,6 +78,17 @@ def run_command(rankfile,  rootdir):
         "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
+def tompkins_to_theano_scheds(sched):
+    """
+    inputs: a sched variable as returned by tompkins.schedule
+
+    outputs: a dict mapping {machine: [apply_nodes]} where the list is the in
+             order schedule of nodes
+    """
+    return {machine: tuple(make_apply(*job) for job, time, m in sched
+                                             if m == machine)
+                        for _, _, machine in sched}
+
 def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
@@ -103,10 +114,6 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
                             for m, dag in cleaner_dags.items()}
 
-    scheds = {machine: tuple(make_apply(*job) for job, time, m in sched
-                                             if m == machine)
-                        for _, _, machine in sched}
-
     rankfile = {machine: i for i, machine in enumerate(dags)}
     tagfile  = {var: i for i, var in enumerate(map(str, variables))}
 
@@ -114,6 +121,8 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
     theano_graphs = {machine: dag_to_theano_graph(dag, ith_output)
                             for machine, dag in full_dags.items()}
+
+    scheds = tompkins_to_theano_scheds(sched)
 
     return theano_graphs, scheds, rankfile
 
@@ -127,7 +136,7 @@ if __name__ == '__main__':
     sanitize(inputs, outputs)
 
     # do timings if necessary
-    recompute = True
+    recompute = False
     if recompute:
         comps = timings.comptime_dict(inputs, outputs, input_shapes, 5,
                                       machines, machine_groups)

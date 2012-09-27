@@ -1,5 +1,6 @@
 from ape.util import unique, load_dict
-from ape.master import sanitize, make_apply, distribute
+from ape.master import (sanitize, make_apply, distribute,
+        tompkins_to_theano_scheds)
 from ape.theano_util import shape_of_variables
 import theano
 import os
@@ -23,6 +24,20 @@ def test_make_apply():
     assert apply.op == op
     assert apply.inputs[0].name == x.name
     assert apply.outputs[0].name == y.name
+
+def test_tompkins_to_theano_scheds():
+    def make_job():
+        x = theano.tensor.matrix('x')
+        y = theano.tensor.matrix('y')
+        op = theano.tensor.elemwise.Sum()
+        return ((x,), op, y)
+    sched = [(make_job(), 1, "A"),
+             (make_job(), 1, "B"),
+             (make_job(), 2, "A")]
+    scheds = tompkins_to_theano_scheds(sched)
+    assert set(scheds.keys()) == set('AB')
+    assert all(isinstance(v, theano.Apply) for vs in scheds.values()
+                                           for v  in vs)
 
 def test_integration():
     from ape.examples.basic_computation import inputs, outputs, input_shapes
