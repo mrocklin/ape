@@ -96,3 +96,16 @@ def test_unify_by_name():
     c2 = filter(lambda v: v.name == 'c', dag2)[0]
     # the bb and b above have been unified
     assert dag2[a2]['args'][0] in dag2[c2]['args']
+
+def test_unify_by_name_with_seed():
+    from theano.tensor.basic import dot
+    a,b,c = theano.tensor.matrices('abc')
+    aa,bb,cc = theano.tensor.matrices('abc')
+
+    dag = {c: {'fn': dot, 'args': (a, b)},
+           a: {'fn': dot, 'args': (bb,)}}
+
+    dag2 = unify_by_name(dag, (a,b,c))
+
+    # the bb and b above have been unified
+    assert dag2[a]['args'] == (b, )

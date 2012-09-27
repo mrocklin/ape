@@ -86,22 +86,25 @@ def gpu_dag(dag):
 
     return merge(gdag, recvs, sends)
 
-def unify_variables(dag, fn):
+def unify_variables(dag, fn, seed=None):
     """
     Create a new dag where all variables that equate under fn are the same
     """
-    cache = {}
+    if seed:
+        cache = dict(zip(map(fn, seed), seed))
+    else:
+        cache = {}
     def new(v):
-        if v.name in cache:
-            return cache[v.name]
+        if fn(v) in cache:
+            return cache[fn(v)]
         else:
-            cache[v.name] = v
+            cache[fn(v)] = v
             return v
-    return {new(k) : {'fn': v['fn'], 'args': map(new, v['args'])}
+    return {new(k) : {'fn': v['fn'], 'args': tuple(map(new, v['args']))}
                         for k, v in dag.items()}
 
-def unify_by_name(dag):
-    return unify_variables(dag, lambda v: v.name)
+def unify_by_name(dag, seed=None):
+    return unify_variables(dag, lambda v: v.name, seed)
 
 def merge_dags(dags):
     """ Merge dags - remove send/recvs between them
