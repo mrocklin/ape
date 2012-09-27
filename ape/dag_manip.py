@@ -85,3 +85,20 @@ def gpu_dag(dag):
     gdag = dict(map(gpu_item, dag.items()))
 
     return merge(gdag, recvs, sends)
+
+def unify_variables(dag, fn):
+    """
+    Create a new dag where all variables that equate under fn are the same
+    """
+    cache = {}
+    def new(v):
+        if v.name in cache:
+            return cache[v.name]
+        else:
+            cache[v.name] = v
+            return v
+    return {new(k) : {'fn': v['fn'], 'args': map(new, v['args'])}
+                        for k, v in dag.items()}
+
+def unify_by_name(dag):
+    return unify_variables(dag, lambda v: v.name)

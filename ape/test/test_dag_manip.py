@@ -76,3 +76,18 @@ def test_gpu_dag():
     assert all(isinstance(v['fn'], GpuOp) for v in gdag.values())
     assert c in gdag
     assert isinstance(gdag[c]['fn'], HostFromGpu)
+
+def test_unify_by_name():
+    from theano.tensor.basic import dot
+    a,b,c = theano.tensor.matrices('abc')
+    aa,bb,cc = theano.tensor.matrices('abc')
+
+    dag = {c: {'fn': dot, 'args': (a, b)},
+           a: {'fn': dot, 'args': (bb,)}}
+
+    dag2 = unify_by_name(dag)
+
+    a2 = filter(lambda v: v.name == 'a', dag2)[0]
+    c2 = filter(lambda v: v.name == 'c', dag2)[0]
+    # the bb and b above have been unified
+    assert dag2[a2]['args'][0] in dag2[c2]['args']
