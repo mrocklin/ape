@@ -45,3 +45,15 @@ def test_internal_gpu_theano_graph():
     assert gins[0].name == 'gpu_x'
     assert gouts[0].name == 'gpu_y'
 
+def test_gpu_job():
+    x = theano.tensor.matrix('x')
+    y = theano.tensor.matrix('y')
+    z = theano.tensor.matrix('z')
+    op = theano.tensor.elemwise.add
+
+    gi, gop, gout = gpu_job((x,y), op, z)
+
+    assert gout.name == gpu_name(z.name)
+    assert gi[0].name == gpu_name(x.name)
+    assert gi[1].name == gpu_name(y.name)
+    assert gop.__class__ == theano.sandbox.cuda.basic_ops.GpuElemwise
