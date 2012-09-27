@@ -114,3 +114,16 @@ def test_variables():
     assert (variables({'a': {'fn': 1, 'args': ('b', 'c')}, 'c': {'fn': 2, 'args': ()}})
             ==
             set('abc'))
+
+def test_merge_cpu_gpu_dags():
+    from theano.tensor.basic import dot
+    a,b,c,d,e,f = theano.tensor.matrices('abcdef')
+    gdag = {b:  {'fn': dot, 'args': (a, a)},
+         't_b': {'fn': ('send', 'cpu'), 'args': (b,)}}
+    cdag = {d:  {'fn': dot, 'args': (c, c)},
+            e:  {'fn': ('recv', 'gpu'), 'args': ()},
+            f:  {'fn': dot, 'args': (d, e)}}
+
+    dag = merge_cpu_gpu_dags('cpu', cdag, 'gpu', gdag)
+
+    assert isinstance(dag[b]['fn'], HostFromGpu)

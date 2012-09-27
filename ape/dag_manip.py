@@ -124,3 +124,16 @@ def merge_dags(dags):
 def variables(dag):
     """ All variables of a dicdag """
     return set.union({a for v in dag.values() for a in v['args']}, dag.keys())
+
+def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
+    """ Merge a cpu and gpu dag - convert the gpu dag first """
+    from tompkins.dag import issend, isrecv
+    if any((issend(v['fn']) or isrecv(v['fn'])) and v['fn'][1] != cpu_name
+            for v in gdag.values()):
+        raise Exception("The GPU wants to communicate to someone who isn't the"
+                        " host. We haven't yet built this functionality. TODO")
+
+    dag = merge_dags({cpu_name: cdag, gpu_name: gpu_dag(non_comm_dag(gdag)[0])})
+    return unify_by_name(dag, tuple(variables(merge(cdag,
+                                                    non_comm_dag(gdag)[0]))))
+
