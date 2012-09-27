@@ -45,6 +45,15 @@ def test_internal_gpu_theano_graph():
     assert gins[0].name == 'gpu_x'
     assert gouts[0].name == 'gpu_y'
 
+def test_merge_cpu_gpu():
+    from theano.basic import dot
+    a,b,c,d,e,f = theano.tensor.matrices('abcdef')
+    gdag = {b:  {'fn': dot, 'args': (a, a)},
+         't_b': {'fn': ('send', 'cpu'), 'args': (b,)}}
+    cdag = {d:  {'fn': dot, 'args': (c, c)},
+            e:  {'fn': ('recv', 'gpu'), 'args': ()},
+            f:  {'fn': dot, 'args': (d, e)}}
+
 def test_gpu_job():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
