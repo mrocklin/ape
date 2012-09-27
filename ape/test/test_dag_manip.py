@@ -109,3 +109,8 @@ def test_unify_by_name_with_seed():
 
     # the bb and b above have been unified
     assert dag2[a]['args'] == (b, )
+
+def test_variables():
+    assert (variables({'a': {'fn': 1, 'args': ('b', 'c')}, 'c': {'fn': 2, 'args': ()}})
+            ==
+            set('abc'))

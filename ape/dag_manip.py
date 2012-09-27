@@ -120,3 +120,7 @@ def merge_dags(dags):
     return {k: v for k,v in dag.items()
             if  not (issend(v['fn']) and v['fn'][1] in dags)
             and not (isrecv(v['fn']) and v['fn'][1] in dags)}
+
+def variables(dag):
+    """ All variables of a dicdag """
+    return set.union({a for v in dag.values() for a in v['args']}, dag.keys())
