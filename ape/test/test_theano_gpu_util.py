@@ -1,4 +1,4 @@
-from ape.timings.theano_gpu_util import *
+from ape.theano_gpu_util import *
 from theano.sandbox.cuda import GpuOp, HostFromGpu, GpuFromHost
 import numpy as np
 import theano

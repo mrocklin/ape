@@ -33,6 +33,6 @@ def internal_gpu_theano_graph(dag):
     outputs = outputs_of(non_comm)
 
     ins, outs = dicdag.theano.dag_to_theano_graph(non_comm, inputs, outputs)
-    gins, gouts = ape.timings.theano_gpu_util.cpu_to_gpu_graph(ins, outs)
+    gins, gouts = ape.theano_gpu_util.cpu_to_gpu_graph(ins, outs)
 
     return gins, gouts
