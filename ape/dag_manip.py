@@ -1,5 +1,7 @@
 import dicdag
 import ape
+from ape.theano_gpu_util import cpu_to_gpu_graph, gpu_name
+from theano.gof.graph import list_of_nodes
 
 def is_gpu_machine(m):
     return m[-4:] == '-gpu'
@@ -33,6 +35,36 @@ def internal_gpu_theano_graph(dag):
     outputs = outputs_of(non_comm)
 
     ins, outs = dicdag.theano.dag_to_theano_graph(non_comm, inputs, outputs)
-    gins, gouts = ape.theano_gpu_util.cpu_to_gpu_graph(ins, outs)
+    gins, gouts = cpu_to_gpu_graph(ins, outs)
 
     return gins, gouts
+
+def gpu_job(i, op, o):
+    """ Convert a cpu job to a gpu job
+
+    inputs:
+        i  - iterable of input variables
+        op - a cpu op
+        o  - iterable of output variables
+    outputs:
+        gi  - iterable of input variables
+        gop - a gpu op
+        go  - iterable of output variables
+    """
+    node = op.make_node(*i)
+    for v,nv in zip(o, node.outputs):
+        nv.name = v.name
+
+    gii, goo = cpu_to_gpu_graph(node.inputs, node.outputs)
+    if len(list_of_nodes(gii, goo)) != 1:
+        raise ValueError("We have assumed that translations of single cpu-ops "
+                         "would result in single gpu-ops. This computation "
+                         "has invalidated that assumption")
+    op = goo[0].owner.op
+    go = map(lambda x: x.clone(), goo)
+    gi = map(lambda x: x.clone(), gii)
+
+    for v, gv in zip(i+o, gi+go):
+        gv.name = gpu_name(v.name)
+
+    return gi, op, go

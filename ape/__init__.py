@@ -8,4 +8,5 @@ import mpi_prelude
 import sys
 import examples
 import timings
+import theano_gpu_util
 

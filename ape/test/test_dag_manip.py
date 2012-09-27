@@ -46,7 +46,7 @@ def test_internal_gpu_theano_graph():
     assert gouts[0].name == 'gpu_y'
 
 def test_merge_cpu_gpu():
-    from theano.basic import dot
+    from theano.tensor.basic import dot
     a,b,c,d,e,f = theano.tensor.matrices('abcdef')
     gdag = {b:  {'fn': dot, 'args': (a, a)},
          't_b': {'fn': ('send', 'cpu'), 'args': (b,)}}
@@ -58,11 +58,11 @@ def test_gpu_job():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.matrix('z')
-    op = theano.tensor.elemwise.add
+    op = theano.tensor.add
 
-    gi, gop, gout = gpu_job((x,y), op, z)
+    gi, gop, go = gpu_job((x,y), op, (z,))
 
-    assert gout.name == gpu_name(z.name)
+    assert go[0].name == gpu_name(z.name)
     assert gi[0].name == gpu_name(x.name)
     assert gi[1].name == gpu_name(y.name)
     assert gop.__class__ == theano.sandbox.cuda.basic_ops.GpuElemwise
