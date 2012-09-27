@@ -9,7 +9,7 @@ gpu_comm = cuda.opt.gpu_cut_copies.query('+gpu')
 
 def cpu_to_gpu_var(x):
     type = cuda.CudaNdarrayType(broadcastable=x.broadcastable)
-    name = 'gpu_%s'%x.name
+    name = gpu_name(x.name)
     gpu_var = cuda.CudaNdarrayVariable(type=type, name=name)
     cpu_var = cuda.host_from_gpu(gpu_var)
     return gpu_var, cpu_var
@@ -20,6 +20,13 @@ def gpu_to_cpu_var(x):
     gpu_var = cuda.CudaNdarrayVariable(type=type, name=name)
     cpu_var = cuda.host_from_gpu(gpu_var)
     return gpu_var, cpu_var
+
+def gpu_name(name):
+    if not name:
+        raise ValueError("Expected variable to have name\n"
+                         "Ensure all variables have names with "
+                         "theano.gof.graph.give_variables_names")
+    return 'gpu_'+name
 
 def cpu_to_gpu_graph(inputs, outputs):
     """ Converts a cpu-only subgraph into a gpu-only subgraph
@@ -37,15 +44,15 @@ def cpu_to_gpu_graph(inputs, outputs):
     gpu_inputs, cpu_inputs = zip(*map(cpu_to_gpu_var, inputs))
     outputs2 = theano.clone(outputs, replace=dict(zip(inputs, cpu_inputs)))
     gpu_outputs = map(theano.sandbox.cuda.basic_ops.gpu_from_host, outputs2)
-    for go, co in zip(gpu_outputs, outputs2):
-        if co.name:
-            go.name = "gpu_"+co.name
 
     fgraph = theano.FunctionGraph(gpu_inputs, gpu_outputs)
     math_opt.optimize(fgraph)
     gpu_opt.optimize(fgraph)
     gpu_comm.optimize(fgraph)
     fgraph.disown()
+
+    for go, co in zip(gpu_outputs, outputs):
+        go.name = gpu_name(co.name)
 
     return tuple(gpu_inputs), tuple(gpu_outputs)
 

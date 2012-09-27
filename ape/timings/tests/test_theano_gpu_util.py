@@ -12,7 +12,7 @@ def test_cpu_to_gpu_graph():
 def test_cpu_to_gpu_graph2():
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
-    z = x + y
+    z = x + y; z.name = 'z'
     _test_cpu_to_gpu_graph((x, y), (z,))
 
 def _test_cpu_to_gpu_graph(i, o):
@@ -29,6 +29,11 @@ def _test_cpu_to_gpu_graph(i, o):
     # And we didn't need any communication
     assert not any(isinstance(n.op, (HostFromGpu, GpuFromHost))
             for n in theano.gof.graph.list_of_nodes(gi, go))
+
+    cpu_names = [v.name for v in i + o]
+    gpu_names = [v.name for v in gi+go]
+    assert gpu_names == map(lambda n: "gpu_"+n, cpu_names)
+
 
 def test_togpu_tocpu_data():
     if theano.config.device != 'gpu':
