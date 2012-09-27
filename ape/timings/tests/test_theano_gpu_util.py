@@ -1,21 +1,34 @@
 from ape.timings.theano_gpu_util import *
+from theano.sandbox.cuda import GpuOp, HostFromGpu, GpuFromHost
 import numpy as np
 import theano
 
 def test_cpu_to_gpu_graph():
-    if theano.config.device != 'gpu':
-        return
     x = theano.tensor.matrix('x')
     y = theano.tensor.matrix('y')
     z = theano.tensor.dot(x,y); z.name = 'z'
-    inputs = (x,y)
-    outputs = (z,)
-    gpu_inputs, gpu_outputs = cpu_to_gpu_graph(inputs, outputs)
-    f = theano.function(gpu_inputs, gpu_outputs)
-    assert all(isinstance(inp, theano.sandbox.cuda.CudaNdarrayVariable)
-                for inp in (gpu_inputs+gpu_outputs))
-    assert 'gpu' in gpu_outputs[0].name and 'z' in gpu_outputs[0].name
+    _test_cpu_to_gpu_graph((x, y), (z,))
 
+def test_cpu_to_gpu_graph2():
+    x = theano.tensor.matrix('x')
+    y = theano.tensor.matrix('y')
+    z = x + y
+    _test_cpu_to_gpu_graph((x, y), (z,))
+
+def _test_cpu_to_gpu_graph(i, o):
+    if theano.config.device != 'gpu':
+        return
+    gi, go = cpu_to_gpu_graph(i, o)
+
+    # Everything is a CudaNdarrayVariable
+    assert all(isinstance(inp, theano.sandbox.cuda.CudaNdarrayVariable)
+                for inp in (gi+go))
+    # Everything is a GpuOp
+    assert all(isinstance(n.op, GpuOp)
+            for n in theano.gof.graph.list_of_nodes(gi, go))
+    # And we didn't need any communication
+    assert not any(isinstance(n.op, (HostFromGpu, GpuFromHost))
+            for n in theano.gof.graph.list_of_nodes(gi, go))
 
 def test_togpu_tocpu_data():
     if theano.config.device != 'gpu':
