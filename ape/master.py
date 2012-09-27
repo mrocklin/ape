@@ -8,7 +8,8 @@ from ape.codegen import (write_inputs, write_rankfile, write_graph,
 
 from ape import timings
 from ape.theano_util import shape_of_variables
-from ape.util import save_dict, load_dict, dearrayify
+from ape.util import save_dict, load_dict, dearrayify, merge
+from ape.dag_manip import merge_cpu_gpu_dags
 
 def sanitize(inputs, outputs):
     """ Ensure that all variables have valid names """
@@ -89,6 +90,19 @@ def tompkins_to_theano_scheds(sched):
                                              if m == machine)
                         for _, _, machine in sched}
 
+def merge_gpu_dags(dags, machines):
+    gpu_dags = {m for m in dags if '-gpu' in m}
+
+    is_gpu = lambda m       : machines[m]['type'] == 'gpu'
+    host   = lambda gpu_name: machines[gpu_name]['host']
+
+    merge_dags = {host(g): merge_cpu_gpu_dags(host(g), dags[host(g)], g,dags[g])
+                        for g in machines if is_gpu(g)}
+    old_dags = {m: dags[m] for m in dags
+                           if  not is_gpu(m)
+                           and not m in merge_dags}
+    return merge(merge_dags, old_dags)
+
 def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
@@ -113,6 +127,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
                         for machine, dag in dags.items()}
     full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
                             for m, dag in cleaner_dags.items()}
+    merge_dags = merge_gpu_dags(full_dags, machines)
 
     rankfile = {machine: i for i, machine in enumerate(dags)}
     tagfile  = {var: i for i, var in enumerate(map(str, variables))}
@@ -120,7 +135,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     ith_output = make_ith_output(rankfile, tagfile, known_shapes)
 
     theano_graphs = {machine: dag_to_theano_graph(dag, ith_output)
-                            for machine, dag in full_dags.items()}
+                            for machine, dag in merge_dags.items()}
 
     scheds = tompkins_to_theano_scheds(sched)
 
@@ -128,7 +143,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
 if __name__ == '__main__':
     from ape.examples.kalman import inputs, outputs, input_shapes
-    from ape.examples.nfs_triple import machines, machine_groups, network
+    from ape.examples.triple import machines, machine_groups, network
     rootdir = 'tmp/'
     os.system('mkdir -p %s'%rootdir)
 

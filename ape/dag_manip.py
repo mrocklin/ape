@@ -104,7 +104,7 @@ def unify_variables(dag, fn, seed=None):
                         for k, v in dag.items()}
 
 def unify_by_name(dag, seed=None):
-    return unify_variables(dag, lambda v: v.name, seed)
+    return unify_variables(dag, str, seed)
 
 def merge_dags(dags):
     """ Merge dags - remove send/recvs between them
