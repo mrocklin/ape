@@ -3,10 +3,6 @@ from theano.sandbox import cuda
 import numpy as np
 import theano
 
-math_opt = theano.compile.optdb.query('-inplace', '+fast_run', '-gpu')
-gpu_opt  = cuda.opt.gpu_optimizer.query('+gpu', '-inplace', '-async')
-gpu_comm = cuda.opt.gpu_cut_copies.query('+gpu')
-
 def cpu_to_gpu_var(x):
     type = cuda.CudaNdarrayType(broadcastable=x.broadcastable)
     name = gpu_name(x.name)
@@ -40,6 +36,10 @@ def cpu_to_gpu_graph(inputs, outputs):
      |gpu_x [@B]
      |gpu_y [@C]
     """
+
+    math_opt = theano.compile.optdb.query('-inplace', '+fast_run', '-gpu')
+    gpu_opt  = cuda.opt.gpu_optimizer.query('+gpu', '-inplace', '-async')
+    gpu_comm = cuda.opt.gpu_cut_copies.query('+gpu')
 
     gpu_inputs, cpu_inputs = zip(*map(cpu_to_gpu_var, inputs))
     outputs2 = theano.clone(outputs, replace=dict(zip(inputs, cpu_inputs)))
