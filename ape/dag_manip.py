@@ -1,7 +1,9 @@
 import dicdag
 import ape
-from ape.theano_gpu_util import cpu_to_gpu_graph, gpu_name
+from ape.theano_gpu_util import cpu_to_gpu_graph, cpu_to_gpu_var, gpu_name
 from theano.gof.graph import list_of_nodes
+from theano.sandbox.cuda.basic_ops import GpuFromHost, HostFromGpu
+from ape.util import merge
 
 def is_gpu_machine(m):
     return m[-4:] == '-gpu'
@@ -68,3 +70,18 @@ def gpu_job(i, op, o):
         gv.name = gpu_name(v.name)
 
     return gi, op, go
+
+def gpu_dag(dag):
+    """ The GPU version of a CPU dag - including gpu communication """
+    i, o = inputs_of(dag), outputs_of(dag)
+    recvs = {cpu_to_gpu_var(inp)[0].clone(): {'fn': GpuFromHost(), 'args': (inp,)}
+                for inp in i}
+    sends = {out: {'fn': HostFromGpu(), 'args': (cpu_to_gpu_var(out)[0].clone(),)}
+                for out in o}
+    def gpu_item((k, v)):
+        i, op, o = v['args'], v['fn'], (k,)
+        gi, gop, go = gpu_job(i, op, o)
+        return (go[0], {'fn': gop, 'args': gi})
+    gdag = dict(map(gpu_item, dag.items()))
+
+    return merge(gdag, recvs, sends)

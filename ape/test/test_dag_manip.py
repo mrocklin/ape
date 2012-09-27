@@ -1,6 +1,6 @@
 from ape.dag_manip import *
 from ape.util import merge
-from theano.sandbox.cuda.basic_ops import gpu_from_host
+from theano.sandbox.cuda.basic_ops import GpuFromHost, GpuOp
 import theano
 
 def test_is_gpu_machine():
@@ -39,7 +39,7 @@ def test_internal_gpu_theano_graph():
     gins, gouts = internal_gpu_theano_graph(comm_dag)
     assert all(isinstance(var, theano.sandbox.cuda.var.CudaNdarrayVariable)
             for var in gins+gouts)
-    assert all(isinstance(n.op, theano.sandbox.cuda.GpuOp)
+    assert all(isinstance(n.op, GpuOp)
                     for n in theano.gof.graph.list_of_nodes(gins, gouts))
 
     assert gins[0].name == 'gpu_x'
@@ -66,3 +66,13 @@ def test_gpu_job():
     assert gi[0].name == gpu_name(x.name)
     assert gi[1].name == gpu_name(y.name)
     assert gop.__class__ == theano.sandbox.cuda.basic_ops.GpuElemwise
+
+def test_gpu_dag():
+    from theano.tensor.basic import dot
+    a,b,c,d,e,f = theano.tensor.matrices('abcdef')
+
+    dag = {c: {'fn': dot, 'args': (a, b)}}
+    gdag = gpu_dag(dag)
+    assert all(isinstance(v['fn'], GpuOp) for v in gdag.values())
+    assert c in gdag
+    assert isinstance(gdag[c]['fn'], HostFromGpu)
