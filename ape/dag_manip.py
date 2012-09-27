@@ -102,3 +102,18 @@ def unify_variables(dag, fn):
 
 def unify_by_name(dag):
     return unify_variables(dag, lambda v: v.name)
+
+def merge_dags(dags):
+    """ Merge dags - remove send/recvs between them
+
+    input:
+        dags - dict mapping {machine: dag}
+    output
+        Just a single dag
+    """
+    from tompkins.dag import issend, isrecv
+
+    dag = merge(*dags.values())
+    return {k: v for k,v in dag.items()
+            if  not (issend(v['fn']) and v['fn'][1] in dags)
+            and not (isrecv(v['fn']) and v['fn'][1] in dags)}
