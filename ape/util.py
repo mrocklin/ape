@@ -24,10 +24,12 @@ def chain(*fns):
 
 def iterable(x):
     try:
-        iter(x)
+        iter(x).next()
         return True
-    except TypeError:
+    except (TypeError):
         return False
+    except StopIteration:
+        return True
 
 prod = lambda L : reduce(lambda a,b:a*b, L, 1)
 
