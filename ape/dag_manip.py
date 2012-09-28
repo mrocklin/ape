@@ -86,22 +86,25 @@ def gpu_dag(dag):
 
     return merge(gdag, recvs, sends)
 
-def unify_variables(dag, fn):
+def unify_variables(dag, fn, seed=None):
     """
     Create a new dag where all variables that equate under fn are the same
     """
-    cache = {}
+    if seed:
+        cache = dict(zip(map(fn, seed), seed))
+    else:
+        cache = {}
     def new(v):
-        if v.name in cache:
-            return cache[v.name]
+        if fn(v) in cache:
+            return cache[fn(v)]
         else:
-            cache[v.name] = v
+            cache[fn(v)] = v
             return v
-    return {new(k) : {'fn': v['fn'], 'args': map(new, v['args'])}
+    return {new(k) : {'fn': v['fn'], 'args': tuple(map(new, v['args']))}
                         for k, v in dag.items()}
 
-def unify_by_name(dag):
-    return unify_variables(dag, lambda v: v.name)
+def unify_by_name(dag, seed=None):
+    return unify_variables(dag, str, seed)
 
 def merge_dags(dags):
     """ Merge dags - remove send/recvs between them
@@ -117,3 +120,20 @@ def merge_dags(dags):
     return {k: v for k,v in dag.items()
             if  not (issend(v['fn']) and v['fn'][1] in dags)
             and not (isrecv(v['fn']) and v['fn'][1] in dags)}
+
+def variables(dag):
+    """ All variables of a dicdag """
+    return set.union({a for v in dag.values() for a in v['args']}, dag.keys())
+
+def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
+    """ Merge a cpu and gpu dag - convert the gpu dag first """
+    from tompkins.dag import issend, isrecv
+    if any((issend(v['fn']) or isrecv(v['fn'])) and v['fn'][1] != cpu_name
+            for v in gdag.values()):
+        raise Exception("The GPU wants to communicate to someone who isn't the"
+                        " host. We haven't yet built this functionality. TODO")
+
+    dag = merge_dags({cpu_name: cdag, gpu_name: gpu_dag(non_comm_dag(gdag)[0])})
+    return unify_by_name(dag, tuple(variables(merge(cdag,
+                                                    non_comm_dag(gdag)[0]))))
+
