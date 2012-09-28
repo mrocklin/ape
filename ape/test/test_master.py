@@ -1,6 +1,6 @@
 from ape.util import unique, load_dict
 from ape.master import (sanitize, make_apply, distribute,
-        tompkins_to_theano_scheds)
+        tompkins_to_theano_scheds, group_sched_by_machine, convert_gpu_scheds)
 from ape.theano_util import shape_of_variables
 import theano
 import os
@@ -25,16 +25,38 @@ def test_make_apply():
     assert apply.inputs[0].name == x.name
     assert apply.outputs[0].name == y.name
 
-def test_tompkins_to_theano_scheds():
-    def make_job():
-        x = theano.tensor.matrix('x')
-        y = theano.tensor.matrix('y')
-        op = theano.tensor.elemwise.Sum()
-        return ((x,), op, y)
+def make_job():
+    x = theano.tensor.matrix('x')
+    y = theano.tensor.matrix('y')
+    op = theano.tensor.elemwise.Sum()
+    return ((x,), op, y)
+
+def test_group_sched_by_machine():
     sched = [(make_job(), 1, "A"),
              (make_job(), 1, "B"),
              (make_job(), 2, "A")]
-    scheds = tompkins_to_theano_scheds(sched)
+    scheds = group_sched_by_machine(sched)
+    assert set(scheds.keys()) == set('AB')
+    assert all(isinstance(v, tuple) for vs in scheds.values()
+                                    for v  in vs)
+
+def test_convert_gpu_scheds():
+    sched = [(make_job(), 1, "A"),
+             (make_job(), 1, "B"),
+             (make_job(), 2, "A")]
+    machines = {"A": {'type': 'cpu'}, "B": {'type': 'gpu'}}
+    scheds = group_sched_by_machine(sched)
+    gpu_scheds = convert_gpu_scheds(scheds, machines)
+    assert gpu_scheds["A"] == scheds["A"]
+    assert gpu_scheds["B"] != scheds["B"]
+    assert isinstance(gpu_scheds["B"][0][1], theano.sandbox.cuda.GpuOp)
+
+def test_tompkins_to_theano_scheds():
+    machines = {"A": {'type': 'cpu'}, "B": {'type': 'gpu'}}
+    sched = [(make_job(), 1, "A"),
+             (make_job(), 1, "B"),
+             (make_job(), 2, "A")]
+    scheds = tompkins_to_theano_scheds(sched, machines)
     assert set(scheds.keys()) == set('AB')
     assert all(isinstance(v, theano.Apply) for vs in scheds.values()
                                            for v  in vs)

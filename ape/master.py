@@ -8,8 +8,8 @@ from ape.codegen import (write_inputs, write_rankfile, write_graph,
 
 from ape import timings
 from ape.theano_util import shape_of_variables
-from ape.util import save_dict, load_dict, dearrayify, merge
-from ape.dag_manip import merge_cpu_gpu_dags
+from ape.util import save_dict, load_dict, dearrayify, merge, iterable
+from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
 
 def sanitize(inputs, outputs):
     """ Ensure that all variables have valid names """
@@ -18,10 +18,12 @@ def sanitize(inputs, outputs):
     map(ape.env_manip.clean_variable, variables)
     assert all(var.name for var in variables)
 
-def make_apply(inputs, op, output):
+def make_apply(inputs, op, outputs):
     """ Turn a unidag job (from tompkins) into a theano apply node """
-    inputs = map(lambda x: x.clone(), inputs)
-    outputs = (output.clone(), )
+    if not iterable(outputs):
+        outputs = (outputs, )
+    inputs  = tuple(map(lambda x: x.clone(),  inputs))
+    outputs = tuple(map(lambda x: x.clone(), outputs))
     return theano.Apply(op, inputs, outputs)
 
 def replace_send_recvs(dag):
@@ -79,16 +81,37 @@ def run_command(rankfile,  rootdir):
         "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
-def tompkins_to_theano_scheds(sched):
+def convert_gpu_scheds(scheds, machines):
+    """ Convert the jobs which correspond to gpu machines to gpu-jobs
+
+    See also:
+        group_sched_by_machine - produces input to this function
+    """
+    gjob = lambda i, op, o: gpu_job(i, op, (o,))
+    return {m: tuple(map(gjob, *zip(*jobs))) if machines[m]['type'] == 'gpu'
+                                         else jobs
+                                for m, jobs in scheds.items()}
+
+def group_sched_by_machine(sched):
+    """
+    inputs: a sched variable as returned by tompkins.schedule
+
+    outputs: a dict mapping {machine: (i, op, o)} where the list is the in
+             order schedule of nodes
+    """
+    return {machine: tuple(job for job, time, m in sched if m == machine)
+                               for _, _, machine in sched}
+
+def tompkins_to_theano_scheds(sched, machines):
     """
     inputs: a sched variable as returned by tompkins.schedule
 
     outputs: a dict mapping {machine: [apply_nodes]} where the list is the in
              order schedule of nodes
     """
-    return {machine: tuple(make_apply(*job) for job, time, m in sched
-                                             if m == machine)
-                        for _, _, machine in sched}
+    scheds = group_sched_by_machine(sched)
+    scheds = convert_gpu_scheds(scheds, machines)
+    return {m: tuple(map(make_apply, *zip(*jobs))) for m, jobs in scheds.items()}
 
 def merge_gpu_dags(dags, machines):
     gpu_dags = {m for m in dags if '-gpu' in m}
@@ -137,7 +160,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     theano_graphs = {machine: dag_to_theano_graph(dag, ith_output)
                             for machine, dag in merge_dags.items()}
 
-    scheds = tompkins_to_theano_scheds(sched)
+    scheds = tompkins_to_theano_scheds(sched, machines)
 
     return theano_graphs, scheds, rankfile
 
@@ -151,7 +174,7 @@ if __name__ == '__main__':
     sanitize(inputs, outputs)
 
     # do timings if necessary
-    recompute = False
+    recompute = True
     if recompute:
         comps = timings.comptime_dict(inputs, outputs, input_shapes, 5,
                                       machines, machine_groups)
