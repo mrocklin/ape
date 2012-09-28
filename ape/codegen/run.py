@@ -1,9 +1,10 @@
 from ape.mpi_prelude import *
 from ape.codegen import read_graph, read_inputs, read_sched, sched_to_cmp
 import theano
+from sys import argv
 
-print "Hello from ", host
-filename_root = 'tmp/'+host
+rootdir = argv[1] or 'tmp/'
+filename_root = rootdir+host
 
 # Unpack envs/jobs from file
 print filename_root+".sched"
