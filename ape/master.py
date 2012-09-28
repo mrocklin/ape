@@ -152,7 +152,8 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
                             for m, dag in cleaner_dags.items()}
     merge_dags = merge_gpu_dags(full_dags, machines)
 
-    rankfile = {machine: i for i, machine in enumerate(dags)}
+    rankfile = {machine: i for i, machine in enumerate(
+                            filter(lambda m: machines[m]['type']=='cpu', dags))}
     tagfile  = {var: i for i, var in enumerate(map(str, variables))}
 
     ith_output = make_ith_output(rankfile, tagfile, known_shapes)
