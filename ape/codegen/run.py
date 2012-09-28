@@ -3,7 +3,7 @@ from ape.codegen import read_graph, read_inputs, read_sched, sched_to_cmp
 import theano
 from sys import argv
 
-rootdir = argv[1] or 'tmp/'
+rootdir = argv[1]
 filename_root = rootdir+host
 
 # Unpack envs/jobs from file
