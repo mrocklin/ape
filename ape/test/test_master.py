@@ -1,7 +1,8 @@
-from ape.util import unique, load_dict
+from ape.util import unique, load_dict, merge
 from ape.master import (sanitize, make_apply, distribute,
         tompkins_to_theano_scheds, group_sched_by_machine, convert_gpu_scheds,
-        start_jobs, is_start_job, remove_start_jobs)
+        start_jobs, is_start_job, remove_start_jobs, remove_end_jobs, end_jobs,
+        remove_jobs_from_sched)
 from ape.theano_util import shape_of_variables
 import theano
 import os
@@ -119,5 +120,29 @@ def test_start_jobs():
 
 def test_remove_start_jobs():
     udag = {((), 'start', ('a',)): ((('a',), 'add', ('b',)),),
+            (('a',), 'add', ('b',)): ((('b',), 'end', ('output_b',)),),
+            (('b',), 'end', ('output_b',)): ()}
+    assert remove_end_jobs(remove_start_jobs(udag)) == {
             (('a',), 'add', ('b',)): ()}
-    assert remove_start_jobs(udag) == {(('a',), 'add', ('b',)): ()}
+
+def test_start_end_jobs():
+    x = theano.tensor.matrix('x')
+    y = theano.tensor.dot(x, x); y.name = 'y'
+    dag, dinputs, doutputs = dicdag.theano.theano_graph_to_dag((x,), (y,))
+    (dx,) = dinputs
+    (dy,) = doutputs
+
+    assert dx.name == x.name
+    assert dy.name == y.name
+
+    dag2 = merge(start_jobs(dinputs), end_jobs(doutputs), dag)
+    assert dy in dag2
+    assert any(len(v['args'])==1 and v['args'][0] == dy for v in dag2.values())
+
+    unidag = dicdag.unidag.dag_to_unidag(dag2)
+
+def test_remove_jobs_from_sched():
+    sched = (((), 'start', 'a'),
+             (('a',), theano.tensor.dot, 'b'),
+             (('b',), 'end', 'output_b'))
+    assert remove_jobs_from_sched(sched) == ((('a',), theano.tensor.dot, 'b'),)
