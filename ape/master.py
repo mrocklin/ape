@@ -8,7 +8,8 @@ from ape.codegen import (write_inputs, write_rankfile, write_graph,
 
 from ape import timings
 from ape.theano_util import shape_of_variables
-from ape.util import save_dict, load_dict, dearrayify, merge, iterable
+from ape.util import (save_dict, load_dict, dearrayify, merge, iterable,
+        intersection, remove)
 from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
 
 def sanitize(inputs, outputs):
@@ -113,6 +114,7 @@ def tompkins_to_theano_scheds(sched, machines):
     scheds = convert_gpu_scheds(scheds, machines)
     return {m: tuple(map(make_apply, *zip(*jobs))) for m, jobs in scheds.items()}
 
+
 def merge_gpu_dags(dags, machines):
     gpu_dags = {m for m in dags if '-gpu' in m}
 
@@ -120,25 +122,55 @@ def merge_gpu_dags(dags, machines):
     host   = lambda gpu_name: machines[gpu_name]['host']
 
     merge_dags = {host(g): merge_cpu_gpu_dags(host(g), dags[host(g)], g,dags[g])
-                        for g in machines if is_gpu(g)}
+                        for g in intersection(machines, dags) if is_gpu(g)}
     old_dags = {m: dags[m] for m in dags
                            if  not is_gpu(m)
                            and not m in merge_dags}
-    return merge(merge_dags, old_dags)
+    new_dags = merge(merge_dags, old_dags)
+    from ape.dag_manip import inputs_of, outputs_of
+    assert all(inputs_of(new_dags[m]) == inputs_of(dags[m]) for m in new_dags)
+    assert all(outputs_of(new_dags[m]) == outputs_of(dags[m]) for m in new_dags)
+
+    return new_dags
+
+start = "start"
+def start_jobs(inputs):
+    return {i: {'fn': start, 'args': ()} for i in inputs}
+end = "end"
+def end_jobs(inputs):
+    return {o: {'fn': end, 'args': ()} for o in outputs}
+
+def is_start_job((i,op,o)):
+    return op==start
+
+def remove_start_jobs(udag):
+    return {job: udag[job]
+            for job in remove(is_start_job, udag)}
+    return {job: tuple(remove(is_start_job, udag[job]))
+                 for job in remove(is_start_job, udag)}
 
 def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
 
     dag, dinputs, doutputs = dicdag.theano.theano_graph_to_dag(inputs, outputs)
-    unidag = dicdag.unidag.dag_to_unidag(dag)
+    dag2 = merge(start_jobs(dinputs),  dag)
+
+    unidag = dicdag.unidag.dag_to_unidag(dag2)
+
+    # TODO: This should be an input
+    is_gpu       = lambda m       : machines[m]['type'] == 'gpu'
+    can_start_on = lambda v, m: not is_gpu(m)
 
     def dag_commtime(job, a, b):
         inputs, op, output = job
         return commtime(output, a, b)
     def dag_comptime(job, a):
-        if job==dicdag.index:
+        if job[1]==dicdag.index:
             return 0
+        if job[1]==start:
+            if can_start_on(job[2], a): return 0
+            else                      : return 99999.9
         return comptime(make_apply(*job), a)
 
     # Compute Schedule
@@ -148,8 +180,13 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
     cleaner_dags = {machine: replace_send_recvs(dag)
                         for machine, dag in dags.items()}
+
+    no_start_dags = {m: remove_start_jobs(dag)
+                        for m, dag in cleaner_dags.items()}
+
     full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
-                            for m, dag in cleaner_dags.items()}
+                            for m, dag in no_start_dags.items()}
+
     merge_dags = merge_gpu_dags(full_dags, machines)
 
     rankfile = {machine: i for i, machine in enumerate(
@@ -175,7 +212,7 @@ if __name__ == '__main__':
     sanitize(inputs, outputs)
 
     # do timings if necessary
-    recompute = True
+    recompute = False
     if recompute:
         comps = timings.comptime_dict(inputs, outputs, input_shapes, 5,
                                       machines, machine_groups)

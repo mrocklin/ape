@@ -1,9 +1,11 @@
 from ape.util import unique, load_dict
 from ape.master import (sanitize, make_apply, distribute,
-        tompkins_to_theano_scheds, group_sched_by_machine, convert_gpu_scheds)
+        tompkins_to_theano_scheds, group_sched_by_machine, convert_gpu_scheds,
+        start_jobs, is_start_job, remove_start_jobs)
 from ape.theano_util import shape_of_variables
 import theano
 import os
+import dicdag
 
 def test_sanitize():
     x = theano.tensor.matrix('x')
@@ -110,3 +112,12 @@ def test_integration():
 
     # test files created
     # test that can read them correctly
+
+def test_start_jobs():
+    assert all(is_start_job(j)
+                for j in dicdag.unidag.dag_to_unidag(start_jobs('abcd')))
+
+def test_remove_start_jobs():
+    udag = {((), 'start', ('a',)): ((('a',), 'add', ('b',)),),
+            (('a',), 'add', ('b',)): ()}
+    assert remove_start_jobs(udag) == {(('a',), 'add', ('b',)): ()}

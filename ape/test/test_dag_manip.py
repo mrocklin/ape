@@ -76,11 +76,25 @@ def test_gpu_dag():
     from theano.tensor.basic import dot
     a,b,c,d,e,f = theano.tensor.matrices('abcdef')
 
-    dag = {c: {'fn': dot, 'args': (a, b)}}
+    dag = {c    : {'fn': dot, 'args': (a, b)},
+           't_c': {'fn': ("send", "cpu"), 'args': (c,)}}
     gdag = gpu_dag(dag)
     assert all(isinstance(v['fn'], GpuOp) for v in gdag.values())
     assert c in gdag
     assert isinstance(gdag[c]['fn'], HostFromGpu)
+
+def test_gpu_dag_sendrecvs():
+    from theano.tensor.basic import dot
+    a,b,c,d,e,f = theano.tensor.matrices('abcdef')
+
+    dag = {c    : {'fn': dot, 'args': (a, b)},
+           't_a': {'fn': ("send", "B"), 'args':(a,)},
+           't_c': {'fn': ("send", "B"), 'args':(c,)}}
+    gdag = gpu_dag(dag)
+    assert a in gdag
+    assert isinstance(gdag[a]['fn'], HostFromGpu)
+    assert gdag[a]['args'][0].name == gpu_name(a.name)
+
 
 def test_unify_by_name():
     from theano.tensor.basic import dot

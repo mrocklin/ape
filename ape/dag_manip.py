@@ -4,6 +4,7 @@ from ape.theano_gpu_util import cpu_to_gpu_graph, cpu_to_gpu_var, gpu_name
 from theano.gof.graph import list_of_nodes
 from theano.sandbox.cuda.basic_ops import GpuFromHost, HostFromGpu
 from ape.util import merge
+from tompkins.dag import issend, isrecv
 
 def is_gpu_machine(m):
     return m[-4:] == '-gpu'
@@ -12,7 +13,6 @@ def non_comm_dag(dag):
     """ Returns the computational core of dicdag. Cuts off send/recvs.
 
     returns core-of-dicdag, {sent_variables}, {recved_variables}"""
-    from tompkins.dag import issend, isrecv
     non_comm = {k:v for k,v in dag.items()
             if not issend(v['fn']) and not isrecv(v['fn'])}
     sent_variables  = {v['args'][0] for k, v in dag.items() if issend(v['fn'])}
@@ -73,16 +73,23 @@ def gpu_job(i, op, o):
 
 def gpu_dag(dag):
     """ The GPU version of a CPU dag - including gpu communication """
-    i, o = inputs_of(dag), outputs_of(dag)
-    recvs = {cpu_to_gpu_var(inp)[0].clone(): {'fn': GpuFromHost(), 'args': (inp,)}
-                for inp in i}
-    sends = {out: {'fn': HostFromGpu(), 'args': (cpu_to_gpu_var(out)[0].clone(),)}
-                for out in o}
+    nc_dag, sent, recvd = non_comm_dag(dag)
+
+    recvs = {cpu_to_gpu_var(var)[0].clone(): {'fn': GpuFromHost(),
+                                              'args': (var,)}
+                for var, it in dag.items()
+                if isrecv(it['fn'])}
+
+    sends = {it['args'][0]: {'fn': HostFromGpu(),
+                             'args':(cpu_to_gpu_var(it['args'][0])[0].clone(),)}
+                for _, it in dag.items()
+                if issend(it['fn'])}
+
     def gpu_item((k, v)):
         i, op, o = v['args'], v['fn'], (k,)
         gi, gop, go = gpu_job(i, op, o)
         return (go[0], {'fn': gop, 'args': gi})
-    gdag = dict(map(gpu_item, dag.items()))
+    gdag = dict(map(gpu_item, nc_dag.items()))
 
     return merge(gdag, recvs, sends)
 
@@ -114,7 +121,6 @@ def merge_dags(dags):
     output
         Just a single dag
     """
-    from tompkins.dag import issend, isrecv
 
     dag = merge(*dags.values())
     return {k: v for k,v in dag.items()
@@ -127,13 +133,12 @@ def variables(dag):
 
 def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
     """ Merge a cpu and gpu dag - convert the gpu dag first """
-    from tompkins.dag import issend, isrecv
     if any((issend(v['fn']) or isrecv(v['fn'])) and v['fn'][1] != cpu_name
             for v in gdag.values()):
         raise Exception("The GPU wants to communicate to someone who isn't the"
                         " host. We haven't yet built this functionality. TODO")
 
-    dag = merge_dags({cpu_name: cdag, gpu_name: gpu_dag(non_comm_dag(gdag)[0])})
+    dag = merge_dags({cpu_name: cdag, gpu_name: gpu_dag(gdag)})
     return unify_by_name(dag, tuple(variables(merge(cdag,
                                                     non_comm_dag(gdag)[0]))))
 
