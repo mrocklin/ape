@@ -42,7 +42,7 @@ def make_ith_output(rankfile, tagfile, known_shapes):
             var = theano.tensor.io.send(inputs[0],
                                         rankfile[machine],
                                         tagfile[str(inputs[0])])
-            var.name = old_var[2:]
+            var.name = "mpi_token_"+old_var[2:]
             return var
 
         if isrecv(fn):
@@ -52,7 +52,7 @@ def make_ith_output(rankfile, tagfile, known_shapes):
                                         old_var.dtype,
                                         rankfile[machine],
                                         tagfile[str(old_var)])
-            var.name = old_var.name
+            var.name = "mpi_token_"+old_var.name
             return var
 
         return dicdag.theano.theano_dag.ith_output(fn, inputs, idx, old_var)
