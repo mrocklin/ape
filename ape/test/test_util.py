@@ -44,3 +44,6 @@ def test_merge():
 def test_unique():
     assert unique('abc')
     assert not unique('aab')
+
+def test_remove():
+    assert remove(lambda x: x > 5, range(10)) == [1, 2, 3, 4, 5]

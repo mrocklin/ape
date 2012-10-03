@@ -73,3 +73,10 @@ def intersection(a, b):
 
 def unique(c):
     return len(c) == len(set(c))
+
+def remove(pred, L):
+    out = []
+    for item in L:
+        if not pred(item):
+            out.append(item)
+    return out
