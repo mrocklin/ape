@@ -80,3 +80,6 @@ def remove(pred, L):
         if not pred(item):
             out.append(item)
     return out
+
+def fmap(f, m):
+    return {k: f(v) for k,v in m.items()}
