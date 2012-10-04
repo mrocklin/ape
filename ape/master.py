@@ -113,7 +113,8 @@ def tompkins_to_theano_scheds(sched, machines):
     scheds = group_sched_by_machine(sched)
     scheds = {m: remove_jobs_from_sched(sch) for m, sch in scheds.items()}
     scheds = convert_gpu_scheds(scheds, machines)
-    return {m: tuple(map(make_apply, *zip(*jobs))) for m, jobs in scheds.items()}
+    return {m: tuple(map(make_apply, *zip(*jobs))) for m, jobs in scheds.items()
+                                                   if     jobs}
 
 
 def merge_gpu_dags(dags, machines):
@@ -203,8 +204,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
     merge_dags = merge_gpu_dags(full_dags, machines)
 
-    rankfile = {machine: i for i, machine in enumerate(
-                            filter(lambda m: machines[m]['type']=='cpu', dags))}
+    rankfile = {machine: i for i, machine in enumerate(merge_dags)}
     tagfile  = {var: i for i, var in enumerate(map(str, variables))}
 
     ith_output = make_ith_output(rankfile, tagfile, known_shapes)
