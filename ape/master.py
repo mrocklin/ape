@@ -79,7 +79,7 @@ def write(graphs, scheds, rankfile, rootdir, known_shapes):
 def run_command(rankfile,  rootdir):
     return (
         "mpiexec -np %(num_hosts)d -hostfile %(rootdir)shostfile "
-        "-rankfile %(rootdir)srankfile python ape/codegen/run.py")%{
+        "-rankfile %(rootdir)srankfile python ape/codegen/run.py %(rootdir)s")%{
             'num_hosts': len(rankfile), 'rootdir': rootdir}
 
 def convert_gpu_scheds(scheds, machines):
