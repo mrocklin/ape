@@ -1,5 +1,5 @@
 from ape.util import (iterable, chain, load_dict, save_dict, dearrayify, merge,
-        unique)
+        unique, remove)
 
 def test_iterable():
     assert iterable([1,2])
