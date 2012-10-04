@@ -248,4 +248,10 @@ if __name__ == '__main__':
     # Write to disk
     write(graphs, scheds, rankfile, rootdir, known_shapes)
 
+    # Print out fgraphs as pdfs
+    fgraphs = {m: theano.FunctionGraph(i, o) for m, (i, o) in graphs.items()}
+    for m, g in fgraphs.items():
+        theano.printing.pydotprint(g, outfile="%s%s.pdf"%(rootdir,m),
+                                      format="pdf")
+
     print run_command(rankfile,  rootdir)
