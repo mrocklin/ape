@@ -9,7 +9,7 @@ from ape.codegen import (write_inputs, write_rankfile, write_graph,
 from ape import timings
 from ape.theano_util import shape_of_variables
 from ape.util import (save_dict, load_dict, dearrayify, merge, iterable,
-        intersection, remove)
+        intersection, remove, fmap)
 from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
 
 def sanitize(inputs, outputs):
@@ -194,14 +194,12 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
             unidag, machines, dag_comptime, dag_commtime,
             lambda j:0, lambda j,a:1, makespan)
 
-    cleaner_dags = {machine: replace_send_recvs(dag)
-                        for machine, dag in dags.items()}
+    cleaner_dags = fmap(replace_send_recvs, dags)
 
-    no_start_end_dags = {m: remove_end_jobs(remove_start_jobs(dag))
-                        for m, dag in cleaner_dags.items()}
+    remove_start_end = lambda x : remove_end_jobs(remove_start_jobs(x))
+    no_start_end_dags = fmap(remove_start_end, cleaner_dags)
 
-    full_dags  = {m: dicdag.unidag.unidag_to_dag(dag)
-                            for m, dag in no_start_end_dags.items()}
+    full_dags  = fmap(dicdag.unidag.unidag_to_dag, no_start_end_dags)
 
     merge_dags = merge_gpu_dags(full_dags, machines)
 
