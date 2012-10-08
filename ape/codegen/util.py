@@ -8,7 +8,12 @@ def write_inputs((inputs, outputs), filename, known_shape_strings):
         file.write("%s = np.random.rand(*%s).astype('%s')\n"%(input.name,
             known_shape_strings[input.name], input.dtype))
 
-    file.write('inputs = (%s,)\n'%(', '.join(i.name for i in inputs)))
+    if len(inputs) != 1:
+        varstrings = ', '.join(i.name for i in inputs)
+    else:
+        varstrings = "%s,"%inputs[0]
+
+    file.write('inputs = (%s)'%varstrings)
     file.close()
 
 def read_inputs(filename):

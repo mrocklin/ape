@@ -13,10 +13,16 @@ def test_write_inputs():
     z = x + y
     write_inputs(((x,y), (z,)), fname, {'x': (10, 10), 'y':(10, 10)})
     file = open(fname); s = file.read(); file.close()
-    assert s == ("import numpy as np\n"
+    assert s.strip() == ("import numpy as np\n"
     "x = np.random.rand(*(10, 10)).astype('float32')\n"
     "y = np.random.rand(*(10, 10)).astype('float32')\n"
-    "inputs = (x, y,)\n")
+    "inputs = (x, y)").strip()
+
+def test_write_inputs_no_inputs():
+    fname = testdir + input_filename
+    write_inputs(((), ()), fname, {})
+    file = open(fname); s = file.read(); file.close()
+    assert s.strip() == "import numpy as np\ninputs = ()".strip()
 
 def test_read_inputs():
     test_write_inputs()
