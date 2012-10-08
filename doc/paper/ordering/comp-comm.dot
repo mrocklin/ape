@@ -1,0 +1,28 @@
+digraph{
+    rankdir = RL;
+    RecvWait1 -> "add-5";
+    RecvWait1 -> "times-2";
+    RecvWait1 -> dot;
+    RecvWait1 -> solve;
+    RecvWait2 -> "add-5";
+    RecvWait2 -> "times-2";
+    RecvWait2 -> dot;
+    RecvWait2 -> solve;
+    SendWait -> "add-5";
+    SendWait -> "times-2";
+    SendWait -> dot;
+    SendWait -> solve;
+    "add-5" -> Recv1;
+    "times-2" -> Recv1;
+    dot -> Recv1;
+    solve -> Recv1;
+    "add-5" -> Recv2;
+    "times-2" -> Recv2;
+    dot -> Recv2;
+    solve -> Recv2;
+    "add-5" -> Send;
+    "times-2" -> Send;
+    dot -> Send;
+    solve -> Send;
+}
+
