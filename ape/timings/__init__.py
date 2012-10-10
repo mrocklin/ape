@@ -13,7 +13,6 @@ See also:
 import communication
 import computation
 import util
-import theano_gpu_util
 
 from communication import commtime_dict, make_commtime_function
 from computation   import comptime_dict, make_runtime_function

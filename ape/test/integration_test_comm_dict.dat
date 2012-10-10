@@ -1,0 +1,2 @@
+{('A', 'B'): {'slope': 1, 'intercept': 0, 'type': 'mpi'},
+ ('B', 'A'): {'slope': 1, 'intercept': 0, 'type': 'mpi'}}

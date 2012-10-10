@@ -24,10 +24,12 @@ def chain(*fns):
 
 def iterable(x):
     try:
-        iter(x)
+        iter(x).next()
         return True
-    except TypeError:
+    except (TypeError):
         return False
+    except StopIteration:
+        return True
 
 prod = lambda L : reduce(lambda a,b:a*b, L, 1)
 
@@ -68,3 +70,16 @@ def merge(*args):
 
 def intersection(a, b):
     return set(a).intersection(set(b))
+
+def unique(c):
+    return len(c) == len(set(c))
+
+def remove(pred, L):
+    out = []
+    for item in L:
+        if not pred(item):
+            out.append(item)
+    return out
+
+def fmap(f, m):
+    return {k: f(v) for k,v in m.items()}

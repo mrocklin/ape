@@ -1,0 +1,6 @@
+{('A',): {'Elemwise{add,no_inplace}(c, d)->[e]': 1.0,
+          'Elemwise{add,no_inplace}(a, b)->[c]': 1.0, 
+          'dot(a, a)->[d]': 100.0},
+ ('B',): {'Elemwise{add,no_inplace}(c, d)->[e]': 100.0,
+          'Elemwise{add,no_inplace}(a, b)->[c]': 100.0, 
+          'dot(a, a)->[d]': 1.0}}

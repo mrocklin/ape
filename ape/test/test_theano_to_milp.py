@@ -27,7 +27,7 @@ def test_compute_schedule():
             dummy_comm_cost, dummy_ability, 100))
 
     # nodes are the jobs
-    assert env.nodes == set([job for job, (time, id) in sched])
+    assert env.apply_nodes == set([job for job, (time, id) in sched])
     times = [time for job, (time, id) in sched]
     # jobs are sorted by time
     assert list(sorted(times)) == times

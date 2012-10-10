@@ -1,6 +1,6 @@
 import theano
 from ape.codegen.util import (write_inputs, write_rankfile, read_inputs,
-        write_fgraph, read_fgraph, write_sched, read_sched, sched_to_cmp)
+        write_graph, read_graph, write_sched, read_sched, sched_to_cmp)
 import os
 
 input_filename = 'testinputs'
@@ -11,13 +11,18 @@ def test_write_inputs():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.functiongraph((x,y), (z,))
-    write_inputs(fgraph, fname, {'x': (10, 10), 'y':(10, 10)})
+    write_inputs(((x,y), (z,)), fname, {'x': (10, 10), 'y':(10, 10)})
     file = open(fname); s = file.read(); file.close()
-    assert s == ("import numpy as np\n"
+    assert s.strip() == ("import numpy as np\n"
     "x = np.random.rand(*(10, 10)).astype('float32')\n"
     "y = np.random.rand(*(10, 10)).astype('float32')\n"
-    "inputs = (x, y,)\n")
+    "inputs = (x, y)").strip()
+
+def test_write_inputs_no_inputs():
+    fname = testdir + input_filename
+    write_inputs(((), ()), fname, {})
+    file = open(fname); s = file.read(); file.close()
+    assert s.strip() == "import numpy as np\ninputs = ()".strip()
 
 def test_read_inputs():
     test_write_inputs()
@@ -35,17 +40,17 @@ def test_write_rankfile():
             "rank 1=c slot=0\n"
             "rank 2=b slot=0\n")
 
-def test_read_write_fgraph():
+def test_read_write_graph():
     x = theano.tensor.matrix('x', dtype='float32')
     y = theano.tensor.matrix('y', dtype='float32')
     z = x + y
-    fgraph = theano.functiongraph((x,y), (z,))
 
     fname = testdir + "test_read_write_fgraph"
-    write_fgraph(fgraph, fname)
-    fgraph2 = read_fgraph(fname)
+    write_graph(((x,y), (z,)), fname)
+    fgraph = theano.FunctionGraph((x,y), (z,))
+    fgraph2 = read_graph(fname)
     assert str(fgraph) == str(fgraph2)
-    assert isinstance(fgraph2, theano.functiongraph)
+    assert isinstance(fgraph2, theano.FunctionGraph)
 
 def _test_sched():
     x = theano.tensor.matrix('x', dtype='float32')

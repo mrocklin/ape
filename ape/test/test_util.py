@@ -1,4 +1,5 @@
-from ape.util import iterable, chain, load_dict, save_dict, dearrayify, merge
+from ape.util import (iterable, chain, load_dict, save_dict, dearrayify, merge,
+        unique, remove, fmap)
 
 def test_iterable():
     assert iterable([1,2])
@@ -39,3 +40,14 @@ def test_merge():
     d = {1:2, 3:4}
     e = {4:5}
     assert merge(d, e) == {1:2, 3:4, 4:5}
+
+def test_unique():
+    assert unique('abc')
+    assert not unique('aab')
+
+def test_remove():
+    assert remove(lambda x: x > 5, range(10)) == [0, 1, 2, 3, 4, 5]
+
+def test_fmap():
+    inc = lambda x : x + 1
+    assert fmap(inc, {1: 2, 3: 4}) == {1: 3, 3: 5}

@@ -21,8 +21,8 @@ def run_on_hosts(hosts, command):
     values = ast.literal_eval(s.read())
     return values
 
-def fgraph_iter(fgraph):
+def graph_iter(apply_nodes):
     """ Returns iterator of atomic funciton graphs - really just apply nodes"""
-    for node in fgraph.nodes:
+    for node in apply_nodes:
         nn = node.clone_with_new_inputs([inp.clone() for inp in node.inputs])
         yield theano.FunctionGraph(nn.inputs, nn.outputs)
