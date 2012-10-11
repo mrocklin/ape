@@ -1,6 +1,6 @@
 import theano
-a = theano.tensor.matrix('a')
-b = theano.tensor.matrix('b')
+a = theano.tensor.fmatrix('a')
+b = theano.tensor.fmatrix('b')
 
 c = a + b; c.name = 'c'
 d = theano.tensor.dot(a, a); d.name = 'd'
