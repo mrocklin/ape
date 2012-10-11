@@ -2,7 +2,10 @@ import dicdag
 import ape
 from ape.theano_gpu_util import cpu_to_gpu_graph, cpu_to_gpu_var, gpu_name
 from theano.gof.graph import list_of_nodes
-from theano.sandbox.cuda.basic_ops import GpuFromHost, HostFromGpu
+try:
+    from theano.sandbox.cuda.basic_ops import GpuFromHost, HostFromGpu
+except ImportError:
+    pass
 from ape.util import merge
 from tompkins.dag import issend, isrecv
 
