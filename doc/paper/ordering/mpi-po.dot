@@ -1,0 +1,13 @@
+digraph{
+    rankdir = RL;
+    solve -> dot;
+    solve -> "times-2";
+    dot -> "times-2";
+    dot -> "add-5";
+    "add-5" -> RecvWait1;
+    "times-2" -> RecvWait2;
+    RecvWait1 -> Recv1;
+    RecvWait2 -> Recv2;
+    Send1 -> "times-2";
+    SendWait1 -> Send1;
+}
