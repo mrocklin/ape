@@ -11,6 +11,7 @@ from ape.theano_util import shape_of_variables
 from ape.util import (save_dict, load_dict, dearrayify, merge, iterable,
         intersection, remove, fmap, unique)
 from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
+from tompkins.dag import issend, isrecv
 
 def sanitize(inputs, outputs):
     """ Ensure that all variables have valid names """
@@ -35,7 +36,6 @@ def replace_send_recvs(dag):
 def make_ith_output(rankfile, tagfn, known_shapes, thismachine):
     known_shape_strings = {str(k): v for k, v in known_shapes.items()}
     def ith_output(fn, inputs, idx, old_var):
-        from tompkins.dag import issend, isrecv
         if issend(fn):
             assert len(inputs) == 1 and idx == 0
             frommachine = thismachine
@@ -179,6 +179,35 @@ tagof.cache = {}
 tagof.nexttag = 0
 tagof.counts = {}
 
+def check_send_recv(dags):
+    """ Check result returned by manydags
+
+    Check that the from/to jobs exist where the sends say they will
+    Check that each send/recv has a partner
+    """
+    for m, dag in dags.items():
+        for outvar, job in dag.items():
+            if issend(job['fn']) or isrecv(job['fn']):
+                if issend(job['fn']):
+                    var = job['args'][0]
+                    from_machine = m
+                    to_machine = job['fn'][1]
+                    print "send", to_machine, var, from_machine
+                    if (str(dags[to_machine][var]) !=
+                        str({'fn':('recv', from_machine), 'args':()})):
+                        assert False
+                        return False
+                if isrecv(job['fn']):
+                    var = outvar
+                    to_machine = m
+                    from_machine = job['fn'][1]
+                    print "recv", to_machine, var, from_machine
+                    if (str({'fn':('send', to_machine), 'args':(var,)}) not in
+                        map(str, dags[from_machine].values())):
+                        assert False
+                        return False
+    return True
+
 def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
@@ -192,7 +221,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     unidag = dicdag.unidag.dag_to_unidag(dag2)
 
     # TODO: This should be an input
-    is_gpu       = lambda m       : machines[m]['type'] == 'gpu'
+    is_gpu       = lambda    m: machines[m]['type'] == 'gpu'
     can_start_on = lambda v, m: not is_gpu(m)
     can_end_on   = lambda v, m: not is_gpu(m)
 
@@ -221,14 +250,20 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     no_start_end_dags = fmap(remove_start_end, cleaner_dags)
 
     full_dags  = fmap(dicdag.unidag.unidag_to_dag, no_start_end_dags)
+    check_send_recv(full_dags)
 
     merge_dags = merge_gpu_dags(full_dags, machines)
+    check_send_recv(merge_dags)
 
-    rankfile = {machine: i for i, machine in enumerate(merge_dags)}
+    rankfile = {machine: i for i, machine in enumerate(sorted(merge_dags))}
 
     theano_graphs = {machine: dag_to_theano_graph(dag,
                      make_ith_output(rankfile, tagof, known_shapes, machine))
                             for machine, dag in merge_dags.items()}
+    if not all(count == 2 for count in tagof.counts.values()):
+        print "issue with tag counts"
+        for x in tagof.counts:          print x
+        for x in tagof.cache:           print x
 
     scheds = tompkins_to_theano_scheds(sched, machines)
 
