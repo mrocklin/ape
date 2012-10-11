@@ -1,5 +1,6 @@
 from ape.mpi_prelude import *
-from ape.codegen import read_graph, read_inputs, read_sched, sched_to_cmp
+from ape.codegen import (read_graph, read_inputs, read_sched, sched_to_cmp,
+        make_scheduler)
 import theano
 from sys import argv
 
