@@ -145,3 +145,29 @@ def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
     return unify_by_name(dag, tuple(variables(merge(cdag,
                                                     non_comm_dag(gdag)[0]))))
 
+def is_sendrecv((k, job), s_or_r):
+    assert s_or_r in ['send', 'recv']
+    return isinstance(job['fn'], tuple) and job['fn'][0] == s_or_r
+
+def flatten_values(d):
+    """ Flatten out the values of a dict
+
+    >>> flatten_values({1: (2, 3), 4: (5,)})
+    [(1, 2), (1, 3), (4, 5)]
+    """
+    return [(k,v) for k, values in d.items() for v in values]
+
+def sends(dag):
+    sendjobs = [job for job in dag.items() if is_sendrecv(job, 'send')]
+    return [(v['args'][0], v['fn'][1]) for (k, v) in sendjobs]
+def recvs(dag):
+    recvjobs = [job for job in dag.items() if is_sendrecv(job, 'recv')]
+    return [(k, v['fn'][1]) for (k, v) in recvjobs]
+
+def allsendrecvs(dags, s_or_r):
+    return sum([sendrecvs(dag, s_or_r) for dag in dags], [])
+
+def consistent_send_recvs(dags):
+    allsends = flatten_values(fmap(sends, dags))
+    allrecvs = flatten_values(fmap(recvs, dags))
+

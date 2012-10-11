@@ -31,9 +31,11 @@ mode = theano.Mode(linker=linker, optimizer=None)
 # Compile
 inputs, outputs = theano.gof.graph.clone(graph.inputs, graph.outputs)
 f = theano.function(inputs, outputs, mode=mode)
-print "\nCompilation on "+host+" finished"
+
+text = "\nCompilation on "+host+" finished"
 for node in f.maker.linker.make_all()[-1]:
-    print node
+    text += str(node) + str('\n')
+print text
 
 # Initialize variables
 inputs = read_inputs(filename_root+".inputs")

@@ -141,3 +141,16 @@ def test_merge_cpu_gpu_dags():
     dag = merge_cpu_gpu_dags('cpu', cdag, 'gpu', gdag)
 
     assert isinstance(dag[b]['fn'], HostFromGpu)
+
+def test_flatten_values():
+    assert flatten_values({1: (2, 3), 4: (5,)}) == [(1, 2), (1, 3), (4, 5)]
+
+def test_sendrecvs():
+    a,b,c,d,e = 'abcde'
+    A,B,C,D,E = 'ABCDE'
+    dag = {a: {'fn': ("recv", A), 'args':()},
+           b: {'fn': "add", 'args': (a, c)},
+           d: {'fn': ("send", A), 'args': (b,)}}
+
+    assert sends(dag) == [(b, A)]
+    assert recvs(dag) == [(a, A)]

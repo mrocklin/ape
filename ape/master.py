@@ -9,7 +9,7 @@ from ape.codegen import (write_inputs, write_rankfile, write_graph,
 from ape import timings
 from ape.theano_util import shape_of_variables
 from ape.util import (save_dict, load_dict, dearrayify, merge, iterable,
-        intersection, remove, fmap)
+        intersection, remove, fmap, unique)
 from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
 
 def sanitize(inputs, outputs):
@@ -32,26 +32,31 @@ def replace_send_recvs(dag):
         lambda A, B, (a,b,fout), c : ((fout,), ("send", B), "t_"+fout.name),
         lambda A, B, (a,b,fout), c : ((), ("recv", A), fout))
 
-def make_ith_output(rankfile, tagfile, known_shapes):
+def make_ith_output(rankfile, tagfn, known_shapes, thismachine):
     known_shape_strings = {str(k): v for k, v in known_shapes.items()}
     def ith_output(fn, inputs, idx, old_var):
         from tompkins.dag import issend, isrecv
         if issend(fn):
             assert len(inputs) == 1 and idx == 0
-            _, machine = fn
-            var = theano.tensor.io.send(inputs[0],
-                                        rankfile[machine],
-                                        tagfile[str(inputs[0])])
+            frommachine = thismachine
+            _, tomachine = fn
+            var = inputs[0]
+            var = theano.tensor.io.send(var,
+                                      rankfile[tomachine],
+                                      tagfn(frommachine, str(var), tomachine))
             var.name = "mpi_token_"+old_var[2:]
             return var
 
         if isrecv(fn):
             assert len(inputs) == 0 and idx == 0
-            _, machine = fn
+            tomachine = thismachine
+            _, frommachine = fn
             var = theano.tensor.io.recv(known_shape_strings[str(old_var)],
                                         old_var.dtype,
-                                        rankfile[machine],
-                                        tagfile[str(old_var)])
+                                        rankfile[frommachine],
+                                        tagfn(frommachine, str(old_var),
+                                               tomachine))
+
             var.name = "mpi_token_"+old_var.name
             return var
 
@@ -159,6 +164,21 @@ def remove_jobs_from_sched(sched):
     pred = lambda x: is_start_job(x) or is_end_job(x)
     return tuple(remove(pred, sched))
 
+def tagof(A, var, B):
+    key = (A, var, B)
+    if key in tagof.cache:
+        tagof.counts[key]+=1
+        return tagof.cache[key]
+    else:
+        tag = tagof.nexttag
+        tagof.nexttag += 1
+        tagof.cache[key] = tag
+        tagof.counts[key] = 1
+        return tag
+tagof.cache = {}
+tagof.nexttag = 0
+tagof.counts = {}
+
 def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, makespan=100):
     known_shapes = shape_of_variables(inputs, outputs, input_shapes)
     variables = theano.gof.graph.variables(inputs, outputs)
@@ -205,16 +225,14 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     merge_dags = merge_gpu_dags(full_dags, machines)
 
     rankfile = {machine: i for i, machine in enumerate(merge_dags)}
-    tagfile  = {var: i for i, var in enumerate(map(str, variables))}
 
-    ith_output = make_ith_output(rankfile, tagfile, known_shapes)
-
-    theano_graphs = {machine: dag_to_theano_graph(dag, ith_output)
+    theano_graphs = {machine: dag_to_theano_graph(dag,
+                     make_ith_output(rankfile, tagof, known_shapes, machine))
                             for machine, dag in merge_dags.items()}
 
     scheds = tompkins_to_theano_scheds(sched, machines)
 
-    return theano_graphs, scheds, rankfile
+    return theano_graphs, scheds, rankfile, makespan
 
 if __name__ == '__main__':
     from ape.examples.kalman import inputs, outputs, input_shapes
@@ -242,8 +260,8 @@ if __name__ == '__main__':
     commtime = timings.make_commtime_function(comms, known_shapes)
 
     # Break up graph
-    graphs, scheds, rankfile = distribute(inputs, outputs, input_shapes,
-                                          machines, commtime, comptime)
+    graphs, scheds, rankfile, make = distribute(inputs, outputs, input_shapes,
+                                                machines, commtime, comptime)
 
     # Write to disk
     write(graphs, scheds, rankfile, rootdir, known_shapes)
@@ -254,4 +272,5 @@ if __name__ == '__main__':
         theano.printing.pydotprint(g, outfile="%s%s.pdf"%(rootdir,m),
                                       format="pdf")
 
+    print "Makespan: %f"%make
     print run_command(rankfile,  rootdir)
