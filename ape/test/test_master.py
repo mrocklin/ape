@@ -90,8 +90,10 @@ def test_integration():
     assert comptime(dot, A) == 100
     assert comptime(dot, B) == 1
 
-    graphs, scheds, rankfile = distribute(inputs, outputs, input_shapes,
-                                          machines, commtime, comptime, 50)
+    graphs, scheds, rankfile, make = distribute(inputs, outputs, input_shapes,
+                                               machines, commtime, comptime, 50)
+
+    assert make == 18 # B-dot:1 + B-d-A:16 + A-+:1
 
     # graphs == "{'A': ([b, a], [e]), 'B': ([a], [d])}"
     ais, [ao]  = graphs[A]

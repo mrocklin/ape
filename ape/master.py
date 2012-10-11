@@ -232,7 +232,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
     scheds = tompkins_to_theano_scheds(sched, machines)
 
-    return theano_graphs, scheds, rankfile
+    return theano_graphs, scheds, rankfile, makespan
 
 if __name__ == '__main__':
     from ape.examples.kalman import inputs, outputs, input_shapes
@@ -260,8 +260,8 @@ if __name__ == '__main__':
     commtime = timings.make_commtime_function(comms, known_shapes)
 
     # Break up graph
-    graphs, scheds, rankfile = distribute(inputs, outputs, input_shapes,
-                                          machines, commtime, comptime)
+    graphs, scheds, rankfile, make = distribute(inputs, outputs, input_shapes,
+                                                machines, commtime, comptime)
 
     # Write to disk
     write(graphs, scheds, rankfile, rootdir, known_shapes)
@@ -272,4 +272,5 @@ if __name__ == '__main__':
         theano.printing.pydotprint(g, outfile="%s%s.pdf"%(rootdir,m),
                                       format="pdf")
 
+    print "Makespan: %f"%make
     print run_command(rankfile,  rootdir)
