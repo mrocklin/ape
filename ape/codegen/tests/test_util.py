@@ -1,7 +1,9 @@
 import theano
 from ape.codegen.util import (write_inputs, write_rankfile, read_inputs,
-        write_graph, read_graph, write_sched, read_sched, sched_to_cmp)
+        write_graph, read_graph, write_sched, read_sched, sched_to_cmp,
+        make_scheduler)
 import os
+from ape import ape_dir
 
 input_filename = 'testinputs'
 testdir = 'tmp/'
@@ -66,6 +68,9 @@ def test_sched_to_cmp():
     sched = an, bn, cn = _test_sched()
     cmp = sched_to_cmp(sched)
     assert cmp(an, bn) < 0 and cmp(cn, an) > 0
+    d = theano.tensor.matrix('d')
+    dn = (d+d).owner
+    assert cmp(dn, an) == 0
 
 def test_write_sched():
     sched = _test_sched()
@@ -74,3 +79,16 @@ def test_write_sched():
     file = open(fname);
     assert len(file.readlines()) == 3
     file.close()
+
+def test_make_scheduler():
+    fgraph      = read_graph(ape_dir+'ape/codegen/tests/test.fgraph')
+    sched       = read_sched(ape_dir+'ape/codegen/tests/test.sched')
+    sched_cmp   = sched_to_cmp(sched)
+    scheduler   = make_scheduler(sched_cmp)
+    nodes       = scheduler(fgraph)
+    nodestrings = map(str, nodes)
+
+    assert all(line.strip() in nodestrings for line in sched)
+
+    indices = map(lambda line: nodestrings.index(line), sched)
+    assert sorted(indices) == indices

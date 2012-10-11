@@ -68,3 +68,13 @@ def sched_to_cmp(sched):
         except ValueError:
             return 0
     return schedule_cmp
+
+def make_scheduler(*sched_cmps):
+    from theano.gof.sched import sort_schedule_fn
+    from theano.tensor.io import mpi_cmps
+    if theano.config.device == 'gpu':
+        from theano.sandbox.cuda.async import gpu_cmps
+    else:
+        gpu_cmps = ()
+
+    return sort_schedule_fn(*(mpi_cmps + gpu_cmps + tuple(sched_cmps)))
