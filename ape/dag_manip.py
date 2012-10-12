@@ -163,7 +163,9 @@ def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
         raise Exception("The GPU wants to communicate to someone who isn't the"
                         " host. We haven't yet built this functionality. TODO")
 
-    dag = merge_dags({cpu_name: cdag, gpu_name: gpu_dag(gdag)})
+    dag = merge_dags({cpu_name: cdag,
+                      gpu_name: gpu_dag(gdag),
+                      "trans" : gpu_dag_transfers(cdag)})
     return unify_by_name(dag, tuple(variables(merge(cdag,
                                                     non_comm_dag(gdag)[0]))))
 
