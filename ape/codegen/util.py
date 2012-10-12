@@ -77,4 +77,4 @@ def make_scheduler(*sched_cmps):
     else:
         gpu_cmps = ()
 
-    return sort_schedule_fn(*(mpi_cmps + gpu_cmps + tuple(sched_cmps)))
+    return sort_schedule_fn(*(tuple(sched_cmps) + mpi_cmps + gpu_cmps))
