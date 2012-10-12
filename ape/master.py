@@ -58,7 +58,7 @@ def make_ith_output(rankfile, tagfn, known_shapes, thismachine):
                                         tagfn(frommachine, str(old_var),
                                                tomachine))
 
-            var.name = "mpi_token_" + old_var.name
+            var.name = old_var.name
             return var
 
         return dicdag.theano.theano_dag.ith_output(fn, inputs, idx, old_var)
