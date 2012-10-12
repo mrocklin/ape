@@ -57,7 +57,7 @@ def make_ith_output(rankfile, tagfn, known_shapes, thismachine):
                                         tagfn(frommachine, str(old_var),
                                                tomachine))
 
-            var.name = "mpi_token_"+old_var.name
+            var.name = "mpi_token_" + old_var.name
             return var
 
         return dicdag.theano.theano_dag.ith_output(fn, inputs, idx, old_var)
@@ -116,17 +116,16 @@ def tompkins_to_theano_scheds(sched, machines):
              order schedule of nodes
     """
     scheds = group_sched_by_machine(sched)
-    scheds = {m: remove_jobs_from_sched(sch) for m, sch in scheds.items()}
     scheds = convert_gpu_scheds(scheds, machines)
     return {m: tuple(map(make_apply, *zip(*jobs))) for m, jobs in scheds.items()
                                                    if     jobs}
 
 
 def merge_gpu_dags(dags, machines):
-    gpu_dags = {m for m in dags if '-gpu' in m}
-
     is_gpu = lambda m       : machines[m]['type'] == 'gpu'
     host   = lambda gpu_name: machines[gpu_name]['host']
+
+    gpu_dags = {m for m in dags if is_gpu(m)}
 
     merge_dags = {host(g): merge_cpu_gpu_dags(host(g), dags[host(g)], g,dags[g])
                         for g in intersection(machines, dags) if is_gpu(g)}
@@ -134,9 +133,6 @@ def merge_gpu_dags(dags, machines):
                            if  not is_gpu(m)
                            and not m in merge_dags}
     new_dags = merge(merge_dags, old_dags)
-    # from ape.dag_manip import inputs_of, outputs_of
-    # assert all(inputs_of(new_dags[m]) == inputs_of(dags[m]) for m in new_dags)
-    # assert all(outputs_of(new_dags[m]) == outputs_of(dags[m]) for m in new_dags)
 
     return new_dags
 
@@ -216,9 +212,8 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     vars = set.union(set(dinputs), set(doutputs), set(dag.keys()),
             {v for value in dag.values() for v in value['args']})
     assert len(vars) == len(map(str, vars))
-    dag2 = merge(start_jobs(dinputs), end_jobs(doutputs), dag)
 
-    unidag = dicdag.unidag.dag_to_unidag(dag2)
+    unidag = dicdag.unidag.dag_to_unidag(dag)
 
     # TODO: This should be an input
     is_gpu       = lambda    m: machines[m]['type'] == 'gpu'
@@ -231,12 +226,6 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     def dag_comptime(job, a):
         if job[1]==dicdag.index:
             return 0
-        if job[1]==start:
-            if can_start_on(job[2], a): return 0
-            else                      : return 99999.9
-        if job[1]==end:
-            if can_end_on(job[2], a): return 0
-            else                    : return 99999.9
         return comptime(make_apply(*job), a)
 
     # Compute Schedule
@@ -246,10 +235,7 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
 
     cleaner_dags = fmap(replace_send_recvs, dags)
 
-    remove_start_end = lambda x : remove_end_jobs(remove_start_jobs(x))
-    no_start_end_dags = fmap(remove_start_end, cleaner_dags)
-
-    full_dags  = fmap(dicdag.unidag.unidag_to_dag, no_start_end_dags)
+    full_dags  = fmap(dicdag.unidag.unidag_to_dag, cleaner_dags)
     check_send_recv(full_dags)
 
     merge_dags = merge_gpu_dags(full_dags, machines)
@@ -302,7 +288,8 @@ if __name__ == '__main__':
     write(graphs, scheds, rankfile, rootdir, known_shapes)
 
     # Print out fgraphs as pdfs
-    fgraphs = {m: theano.FunctionGraph(i, o) for m, (i, o) in graphs.items()}
+    fgraphs = {m: theano.FunctionGraph(*theano.gof.graph.clone(i, o))
+                            for m, (i, o) in graphs.items()}
     for m, g in fgraphs.items():
         theano.printing.pydotprint(g, outfile="%s%s.pdf"%(rootdir,m),
                                       format="pdf")
