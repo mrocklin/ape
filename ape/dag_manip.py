@@ -165,9 +165,14 @@ def merge_cpu_gpu_dags(cpu_name, cdag, gpu_name, gdag):
 
     dag = merge_dags({cpu_name: cdag,
                       gpu_name: gpu_dag(gdag),
-                      "trans" : gpu_dag_transfers(cdag)})
-    return unify_by_name(dag, tuple(variables(merge(cdag,
-                                                    non_comm_dag(gdag)[0]))))
+                      "trans" : gpu_dag_transfers(gdag)})
+    result = unify_by_name(dag, tuple(variables(merge(cdag,
+                                                      non_comm_dag(gdag)[0]))))
+    if any(not isinstance(x, str) and 'gpu' in x.name
+            for x in inputs_of(result).union(outputs_of(result))):
+        raise Exception("GPU inputs/outputs")
+
+    return result
 
 def is_sendrecv((k, job), s_or_r):
     assert s_or_r in ['send', 'recv']

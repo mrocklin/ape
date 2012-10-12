@@ -12,6 +12,7 @@ from ape.util import (save_dict, load_dict, dearrayify, merge, iterable,
         intersection, remove, fmap, unique)
 from ape.dag_manip import merge_cpu_gpu_dags, gpu_job
 from tompkins.dag import issend, isrecv
+from ape import dag_manip
 
 def sanitize(inputs, outputs):
     """ Ensure that all variables have valid names """
@@ -246,6 +247,18 @@ def distribute(inputs, outputs, input_shapes, machines, commtime, comptime, make
     theano_graphs = {machine: dag_to_theano_graph(dag,
                      make_ith_output(rankfile, tagof, known_shapes, machine))
                             for machine, dag in merge_dags.items()}
+
+    # Check that all inputs and outputs are inputs/outputs to the computation
+    # or mpi
+    def valid_inp(x):
+        return x.name in map(str, inputs)
+    def valid_out(x):
+        return x.name in map(str, outputs) or 'mpi_token' in str(x)
+    assert all(valid_inp(x) for g in theano_graphs.values()
+                            for x in g[0])
+    assert all(valid_out(x) for g in theano_graphs.values()
+                            for x in g[1])
+
     if not all(count == 2 for count in tagof.counts.values()):
         print "issue with tag counts"
         for x in tagof.counts:          print x
