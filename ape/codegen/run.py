@@ -28,9 +28,9 @@ mode = theano.Mode(linker=linker, optimizer=None)
 inputs, outputs = theano.gof.graph.clone(graph.inputs, graph.outputs)
 f = theano.function(inputs, outputs, mode=mode)
 
-text = "\nCompilation on "+host+" finished"
+text = "\nCompilation on "+host+" finished\n"
 for node in f.maker.linker.make_all()[-1]:
-    text += str(node) + str('\n')
+    text += str(node) + '\n'
 print text
 
 # Initialize variables
