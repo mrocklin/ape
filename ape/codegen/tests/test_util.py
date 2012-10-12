@@ -88,7 +88,9 @@ def test_make_scheduler():
     nodes       = scheduler(fgraph)
     nodestrings = map(str, nodes)
 
-    assert all(line.strip() in nodestrings for line in sched)
+
+    print set(sched) - set(nodestrings)
+    assert set(sched).issubset(set(nodestrings))
 
     indices = map(lambda line: nodestrings.index(line), sched)
     assert sorted(indices) == indices

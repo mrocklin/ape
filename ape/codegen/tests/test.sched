@@ -1,0 +1,7 @@
+DimShuffle{1,0}(H)->[H_dot_T_6]
+dot(Sigma, H_dot_T_6)->[_5]
+Elemwise{add,no_inplace}(R, _4)->[B]
+Solve{('general', False, False, False)}(B, H)->[_3]
+Solve{('general', False, False, False)}(B, _9)->[_8]
+dot(A, _8)->[_7]
+Elemwise{sub,no_inplace}(Sigma, _0)->[updated_Sigma]
