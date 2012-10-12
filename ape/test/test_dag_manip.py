@@ -83,6 +83,23 @@ def test_gpu_dag():
     assert c in gdag
     assert isinstance(gdag[c]['fn'], HostFromGpu)
 
+def test_gpu_dag_transfers():
+    from theano.tensor.basic import dot
+    a,b,c = theano.tensor.matrices('abc')
+
+    dag = {c    : {'fn': dot, 'args': (a, b)}}
+    gdag = gpu_dag_transfers(dag)
+
+    print gdag
+
+    assert c in gdag
+    assert isinstance(gdag[c]['fn'], HostFromGpu)
+    assert all(isinstance(v['fn'], (HostFromGpu, GpuFromHost))
+                            for v in gdag.values())
+    assert all(any(inp in v['args'] for v in gdag.values())
+                                    for inp in (a,b))
+    assert len(gdag) == 3
+
 def test_gpu_dag_sendrecvs():
     from theano.tensor.basic import dot
     a,b,c,d,e,f = theano.tensor.matrices('abcdef')

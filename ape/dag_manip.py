@@ -2,6 +2,7 @@ import dicdag
 import ape
 from ape.theano_gpu_util import cpu_to_gpu_graph, cpu_to_gpu_var, gpu_name
 from theano.gof.graph import list_of_nodes
+import theano
 try:
     from theano.sandbox.cuda.basic_ops import GpuFromHost, HostFromGpu
 except ImportError:
@@ -95,6 +96,27 @@ def gpu_dag(dag):
     gdag = dict(map(gpu_item, nc_dag.items()))
 
     return merge(gdag, recvs, sends)
+
+def gpu_dag_transfers(dag):
+    """ Edges/jobs for moving data from gpu version dag to cpu version
+
+    >>> dag = {c: {'fn': dot 'args': (a, b)}}
+    >>> gpu_dag_transfers(dag)
+    {c:      {'fn': HostFromGpu(), 'args': (gpu_c,)},
+     gpu_a:  {'fn': GpuFromHost(), 'args': (a, )},
+     gpu_b:  {'fn': GpuFromHost(), 'args': (b, )}}
+    """
+
+    recv_inputs = {cpu_to_gpu_var(var)[0].clone(): {'fn': GpuFromHost(),
+                                                    'args': (var,)}
+                    for var in inputs_of(dag)
+                    if isinstance(var, theano.Variable)}
+
+    send_outputs = {var: {'fn': HostFromGpu(),
+                          'args': (cpu_to_gpu_var(var)[0].clone(),)}
+                    for var in outputs_of(dag)
+                    if isinstance(var, theano.Variable)}
+    return merge(recv_inputs, send_outputs)
 
 def unify_variables(dag, fn, seed=None):
     """
