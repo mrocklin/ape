@@ -1,6 +1,9 @@
 APE
 ===
 
+*This project is defunct.  I came to the conclusion that it was trying to
+accomplish too much.*
+
 This is a project to investigate the feasibility of statically scheduling array
 primitive operations onto heterogeneous hardware.
 
